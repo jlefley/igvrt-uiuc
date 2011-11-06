@@ -2,7 +2,7 @@
 
 using namespace std;
 
-void add(int, int);
+void add(a, b);
 
 int main()
 {
@@ -11,7 +11,7 @@ int b = 2;
 
 add(a,b);
 
-cout << "a= " << a << " " << "b= " << b << endl;
+cout << "a=1" << a << "apple" << "b=2" << b << endl;
 
 return 0;
 }

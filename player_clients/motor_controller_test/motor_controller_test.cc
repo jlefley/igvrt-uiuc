@@ -14,20 +14,22 @@ int main(int argc, char *argv[])
 	PlayerClient robot("localhost");
 	Position2dProxy pp(&robot,0);
 	ImuProxy ii(&robot,0);
+	SonarProxy test(&robot,0);
 	double tv, rv, set,error,meas;
 	double A = -1; // p
 	double B = 0.1; // d
 	double C = 0.01; // i
-
+	double distance=0; //distance from robot to object
 	cout << "Enter heading: ";
 	cin >> set;
 	cout << "Enter tv: ";
 	cin >> tv;
 	
+	
 	while(1)
 	{
 		robot.Read();
-
+		distance=test[0];
 		meas = ii.GetPose().pyaw;
 		error = headingError(set, meas);
 		rv = A*error;
@@ -38,13 +40,20 @@ int main(int argc, char *argv[])
 
 		cout << "rv: " << rv << endl;
 
-		
-		
-//		cout << "tv rv:";
-//		cin >> tv >> rv;
-
+		cout << "Range: " << distance << endl;
 		//pp.SetSpeed(30,0);
-		pp.SetSpeed(tv, rv);
+		if(distance<36)
+			{
+			tv=15;
+			rv=30;
+			}
+		if(distance<18)
+			{
+			tv=0;
+			rv=0;
+			}
+	
+		pp.SetSpeed(tv,rv);
 	}
 
 }
