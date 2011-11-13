@@ -18,25 +18,24 @@ cout << "Enter Right Sensor Active value(1 or 0); " << endl;
 cin >>  rightSensorActive;
 
 //Make a set of conditional statements to set the values of the boolean variables based on the sensor values
-//I'll get you started
-/*
+
 if(leftSensorActive == 0 && rightSensorActive == 0)
 	{
-	//Put Code Here
+	goStraight = 1;
 	}
-if(//code here)
+if(leftSensorActive == 1 && rightSensorActive == 0)
 	{
-	//Code here
+	turnleft = 1;
 	}
-if(//code here)
+if(leftSensorActive == 0 && rightSensorActive == 1)
 	{
-	//Code here
+	turnRight = 1;
 	}
-if(//code here)
+if(leftSensorActive == 1 && rightSensoractive == 1)
 	{
-	//Code here
+	stop = 1;
 	}
-*/
+
 cout << "rightSensorActive =: " << rightSensorActive << endl;
 cout << "leftSensorActive =: " << leftSensorActive << endl;
 cout << "turnLeft =: " << turnLeft << endl;
