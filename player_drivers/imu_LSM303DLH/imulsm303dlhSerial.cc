@@ -27,7 +27,7 @@ bool imulsm303dlhSerial::readMsg()
 		break;
 	}
 
-	sscanf(body.c_str(), "%d,%d,%d,%d,%d,%d,%d,%d,%d,%d",&aX,&aY,&aZ,&mX,&mY,&mZ,&heading,&distance_center,&distance_left,&distance_right);
+	sscanf(body.c_str(), "%d,%d,%d,%d,%d,%d,%d,%d",&aX,&aY,&aZ,&mX,&mY,&mZ,&heading,&distance);
 
 	return true;
 }
