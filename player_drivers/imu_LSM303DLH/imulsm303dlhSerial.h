@@ -35,8 +35,10 @@ class imulsm303dlhSerial : public SerialDevice
 public:
 	bool readMsg();	
 	int getHeading();
-	int getDistance();
-
+	int getRightDistance();
+	int getLeftDistance();
+	int getCenterDistance();
+	bool flashLight(int flash);
 	/*static const double AXEL_LENGTH_M = 1.0; // Length of Axel
 
 	// send/recv functions
@@ -63,7 +65,9 @@ protected:
 	int mY;
 	int mZ;
 	int heading;
-	int distance;
+	int distanceright;
+	int distanceleft;
+	int distancecenter;
 
 	/*double _left;
 	double _right;

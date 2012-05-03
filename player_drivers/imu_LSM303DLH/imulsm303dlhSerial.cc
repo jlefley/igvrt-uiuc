@@ -27,7 +27,28 @@ bool imulsm303dlhSerial::readMsg()
 		break;
 	}
 
-	sscanf(body.c_str(), "%d,%d,%d,%d,%d,%d,%d,%d",&aX,&aY,&aZ,&mX,&mY,&mZ,&heading,&distance);
+	sscanf(body.c_str(), "%d,%d,%d,%d,%d,%d,%d,%d,%d,%d", &aX,&aY,&aZ,&mX,&mY,&mZ,&heading,&distancecenter,&distanceleft,&distanceright);
+	
+	return true;
+}
+
+bool imulsm303dlhSerial::flashLight(int flash)
+{
+	vector<unsigned char> msg(1);
+
+	if(flash == 1)
+	{
+		msg[0] = '1';
+	}
+	else
+	{
+		msg[0] = '0';
+	}
+
+	if(!sendBytes(msg))
+	{
+		return false;
+	}
 
 	return true;
 }
@@ -37,11 +58,21 @@ int imulsm303dlhSerial::getHeading()
 	return heading;
 }
 
-int imulsm303dlhSerial::getDistance()
+int imulsm303dlhSerial::getRightDistance()
 {
-	return distance;
+	return distanceright;
 }
 
+
+int imulsm303dlhSerial::getLeftDistance()
+{
+	return distanceleft;
+}
+
+int imulsm303dlhSerial::getCenterDistance()
+{
+	return distancecenter;
+}
 
 /*bool imulsm303dlhSerial::recvSensorData()
 {

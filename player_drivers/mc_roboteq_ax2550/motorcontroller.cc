@@ -43,6 +43,8 @@ private:
 	MotorControllerSerial m; // low level serial object
 	const char* serial_port; // name of serial port of Motor Controller
 	player_devaddr_t position_addr; // address of position2d interface
+	player_devaddr_t power_addr; // address of power interface
+	player_devaddr_t dio_addr; // address of dio (digital I/O) interface
 	double ox, oy, oa; // Integrated odometric position [m m rad]
 	timeval start, stop, result; // Time during each odometric position updating
 	bool init_time; // A flag of whether the timer is initialized
@@ -80,11 +82,39 @@ MotorControllerDriver::MotorControllerDriver(ConfigFile* cf, int section)
 	{
 		if(this->AddInterface(this->position_addr) != 0)
 		{
+			PLAYER_ERROR("Error adding position2d interface\n");
 			this->SetError(-1);
 			return;
 		}
 	}
+	
+	
+	memset(&this->power_addr,0,sizeof(player_devaddr_t));
 
+	// Do we create a power interface?
+	if(cf->ReadDeviceAddr(&(this->power_addr), section, "provides", PLAYER_POWER_CODE, -1, NULL) == 0)
+	{
+		if(this->AddInterface(this->power_addr) != 0)
+		{
+			PLAYER_ERROR("Error adding power interface\n");			
+			this->SetError(-1);
+			return;
+		}
+	}
+	/*
+	memset(&this->dio_addr,0,sizeof(player_devaddr_t));
+
+	// Do we create a dio (digital I/O) interface?
+	if(cf->ReadDeviceAddr(&(this->dio_addr), section, "provides", PLAYER_DIO_CODE, -1, NULL) == 0)
+	{
+		if(this->AddInterface(this->dio_addr) != 0)
+		{
+			PLAYER_ERROR("Error adding dio interface\n");
+			this->SetError(-1);
+			return;
+		}
+	}
+	*/
 	// Read options from the configuration file
 	this->serial_port = cf->ReadString(section, "port", "/dev/ttyS0");
 
@@ -294,11 +324,12 @@ void MotorControllerDriver::Main()
 		//Get sensor data
 		if(m.recvSensorData())
 		{
-			std::cout << "Left motor velocity: " << m.left() << endl;
+			/*std::cout << "Left motor velocity: " << m.left() << endl;
 			std::cout << "Right motor velocity: " << m.right() << endl;
 			std::cout << "Main Batt Voltage: " << m.mainVoltage() << endl;
 			std::cout << "Internal Voltage: " << m.internalVoltage() << endl;
-			
+			std::cout << "Estop: " << m.estopState() << endl;
+			*/
 			if(init_time == false)
       			{
       				gettimeofday(&start, NULL); // get start time
@@ -318,6 +349,16 @@ void MotorControllerDriver::Main()
 			posdata.stall = 0;
 
 			this->Publish(this->position_addr, PLAYER_MSGTYPE_DATA, PLAYER_POSITION2D_DATA_STATE, (void*)&posdata, sizeof(posdata), NULL);
+
+			////////////////////////////
+			// Publish power data
+			player_power_data_t powerdata;
+			memset(&powerdata,0,sizeof(powerdata));
+			
+			powerdata.valid = 1;
+			powerdata.volts = m.mainVoltage();
+			
+			this->Publish(this->power_addr, PLAYER_MSGTYPE_DATA, PLAYER_POWER_DATA_STATE, (void*)&powerdata, sizeof(powerdata), NULL);
 		}
 		else
 		{

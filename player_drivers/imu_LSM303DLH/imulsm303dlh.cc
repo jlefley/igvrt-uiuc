@@ -6,6 +6,7 @@
  *   - Provides:
  *     - IMU
  *     - Sonar
+ *     - DIO
  *   - Requires:
  *     - <none>
  */
@@ -44,6 +45,7 @@ private:
 	//private data members
 	player_devaddr_t imu_addr; // address of imu interface
 	player_devaddr_t sonar_addr; //address of sonar interface
+	player_devaddr_t dio_addr; //address of digital i/o interface
 	imulsm303dlhSerial s; // low level serial interface to imu/sonar data
 };
 
@@ -88,6 +90,16 @@ IMULSM303DLHDriver::IMULSM303DLHDriver(ConfigFile* cf, int section)
 	if(cf->ReadDeviceAddr(&(this->sonar_addr), section, "provides", PLAYER_SONAR_CODE, -1, NULL) == 0)
 	{
 		if(this->AddInterface(this->sonar_addr) != 0)
+		{
+			this->SetError(-1);
+			return;
+		}
+	}
+
+	// Do we create a DIO interface?
+	if(cf->ReadDeviceAddr(&(this->dio_addr), section, "provides", PLAYER_DIO_CODE, -1, NULL) == 0)
+	{
+		if(this->AddInterface(this->dio_addr) != 0)
 		{
 			this->SetError(-1);
 			return;
@@ -154,6 +166,26 @@ int IMULSM303DLHDriver::ProcessMessage(QueuePointer & resp_queue, player_msghdr 
 		this->Publish(this->sonar_addr, resp_queue, PLAYER_MSGTYPE_RESP_ACK, PLAYER_SONAR_REQ_GET_GEOM, (void*)&sonar_pose, sizeof sonar_pose, NULL);
 		return 0;
 	}
+	
+	////DI: PLAYER_DIO_CMD_VALUES
+	if(Message::MatchMessage(hdr, PLAYER_MSGTYPE_CMD, PLAYER_DIO_CMD_VALUES, this->dio_addr))
+	{    
+		if(data == NULL)
+		{
+			PLAYER_ERROR("IMU/SONAR: DIO CMD_VALUES msg has no data.");
+			return -1;
+		}
+
+		// cast data to correct type
+		player_dio_cmd_t* d = (player_dio_cmd_t*)data;
+
+		// set speeds
+		if(s.flashLight(d->digout) == false)
+		{
+			PLAYER_ERROR("LIGHT FAILURE.");
+			return -1;
+		}
+	}
 
 	return 0;
 }
@@ -161,7 +193,7 @@ int IMULSM303DLHDriver::ProcessMessage(QueuePointer & resp_queue, player_msghdr 
 
 void IMULSM303DLHDriver::publishIMUSonarData()
 {
-	float sonararr[1];
+	float sonararr[3];
 
 	////////////////////////////////
 	// Publish IMU Data
@@ -184,12 +216,16 @@ void IMULSM303DLHDriver::publishIMUSonarData()
 	player_sonar_data_t sonardata;
 	memset(&sonardata,0,sizeof(sonardata));
 
-	sonararr[0] = float(this->s.getDistance());
+	sonararr[0] = float(this->s.getCenterDistance());
+	sonararr[1] = float(this->s.getLeftDistance());
+	sonararr[2] = float(this->s.getRightDistance());
 
-	sonardata.ranges_count = 1;
+	sonardata.ranges_count = 3;
 	sonardata.ranges = sonararr;
 
-	cout << "Distance: " << this->s.getDistance() << " inches" << endl;
+	cout << "Distance Right: " << sonararr[2] << " inches" << endl;
+	cout << "Distance Left: " << sonararr[1] << " inches" << endl;
+	cout << "Distance Center: " << sonararr[0] << " inches" << endl;
 
 	this->Publish(this->sonar_addr, PLAYER_MSGTYPE_DATA, PLAYER_SONAR_DATA_RANGES, (void*)&sonardata, sizeof(sonardata), NULL);
 

@@ -42,6 +42,7 @@ public:
 	bool recvSensorData();
 	bool recvBatteryVoltage();
 	bool recvMotorValues();
+	bool recvInputs();
 	bool sendMotorCmd(double new_left, double new_right);
 
 	// sensor read functions
@@ -49,6 +50,7 @@ public:
 	double right();
 	double mainVoltage();
 	double internalVoltage();
+	bool estopState();
 
 protected:
 
@@ -56,6 +58,7 @@ protected:
 	double _right;
 	double _mainVoltage;
 	double _internalVoltage;
+	int _inputs[3];
 
 	unsigned char evenParity(unsigned char d);
 	int hexStringToInt(const string & hex);

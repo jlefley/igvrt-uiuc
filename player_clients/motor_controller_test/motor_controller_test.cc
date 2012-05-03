@@ -42,17 +42,17 @@ int main(int argc, char *argv[])
 
 		cout << "Range: " << distance << endl;
 		//pp.SetSpeed(30,0);
-		if(distance<36.0 && distance>30.0)
+		if(distance<100.0 && distance>50.0)
 			{
-			pp.SetSpeed(15,30);
+			pp.SetSpeed(20,80);
 			}
-		else if(distance<30.0 && distance>24.0)
+		else if(distance<50.0 && distance>24.0)
 			{
-			pp.SetSpeed(10,40);
+			pp.SetSpeed(20,60);
 			}
 		else if(distance<24.0 && distance>18.0)
 			{
-			pp.SetSpeed(5,60);
+			pp.SetSpeed(20,90);
 			}
 		else if(distance<18.0)
 			{

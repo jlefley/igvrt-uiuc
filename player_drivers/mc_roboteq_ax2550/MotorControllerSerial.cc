@@ -14,8 +14,49 @@ bool MotorControllerSerial::recvSensorData()
 	if(!recvMotorValues())
 		return false;
 
+	if(!recvInputs())
+		return false;
+
 	return true;
 }
+
+bool MotorControllerSerial::recvInputs()
+{
+	vector<unsigned char> msg(3);
+	vector<unsigned char> resp(9);
+	string inputE = "00";
+	string inputF = "00";
+	string inputEstop = "00";
+
+	msg[0] = '?';
+	msg[1] = 'i';
+	msg[2] = '\r';
+
+	if(!sendBytes(msg))
+		return false;
+
+	if(!recvUntilMsg(msg, 4096))
+		return false;
+
+	if(!recvBytes(resp))
+		return false;
+
+	inputE[0] = resp[0];
+	inputE[1] = resp[1];
+
+	inputF[0] = resp[3];
+	inputF[1] = resp[4];
+
+	inputEstop[0] = resp[6];
+	inputEstop[1] = resp[7];
+
+	_inputs[0] = ((int)hexStringToInt(inputE));
+	_inputs[1] = ((int)hexStringToInt(inputF));
+	_inputs[2] = ((int)hexStringToInt(inputEstop));
+
+
+	return true;
+}	
 
 bool MotorControllerSerial::recvBatteryVoltage()
 {
@@ -297,3 +338,15 @@ double MotorControllerSerial::internalVoltage()
 	return _internalVoltage;
 }
 
+bool MotorControllerSerial::estopState()
+{
+	if (_inputs[2] == 1)
+	{
+		return false;
+	}
+	else
+	{
+		return true;
+	}
+
+}
