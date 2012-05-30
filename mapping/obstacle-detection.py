@@ -6,7 +6,7 @@ import math
 mask = highgui.cvLoadImage(str(sys.argv[1]))
 
 
-cap = highgui.cvCreateCameraCapture(0)
+cap = highgui.cvCreateCameraCapture(1)
 IMGW = 640
 IMGH = 400
 highgui.cvSetCaptureProperty(cap, highgui.CV_CAP_PROP_FRAME_WIDTH, IMGW)

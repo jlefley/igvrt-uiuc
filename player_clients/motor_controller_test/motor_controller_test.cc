@@ -19,7 +19,9 @@ int main(int argc, char *argv[])
 	double A = -1; // p
 	double B = 0.1; // d
 	double C = 0.01; // i
-	double distance=0; //distance from robot to object
+	double distance_center=0; //distance from robot to object
+	double distance_right=0;
+	double distance_left=0;
 	cout << "Enter heading: ";
 	cin >> set;
 	cout << "Enter tv: ";
@@ -29,7 +31,9 @@ int main(int argc, char *argv[])
 	while(1)
 	{
 		robot.Read();
-		distance=test[0];
+		distance_center=test[0];
+		distance_left=test[1];
+		distance_right=test[2];
 		meas = ii.GetPose().pyaw;
 		error = headingError(set, meas);
 		rv = A*error;
@@ -41,27 +45,30 @@ int main(int argc, char *argv[])
 		cout << "rv: " << rv << endl;
 
 		cout << "Range: " << distance << endl;
-		//pp.SetSpeed(30,0);
-		if(distance<100.0 && distance>50.0)
-			{
-			pp.SetSpeed(20,80);
-			}
-		else if(distance<50.0 && distance>24.0)
-			{
-			pp.SetSpeed(20,60);
-			}
-		else if(distance<24.0 && distance>18.0)
-			{
-			pp.SetSpeed(20,90);
-			}
-		else if(distance<18.0)
-			{
-			pp.SetSpeed(0,0);
-			}
+		
+		if(distance_center < 50.0 && distance_right > 80.0)
+		{
+			pp.SetSpeed(20,50);
+		}
 		else
+		{
+			if(distance_center < 50.0 && distance_left > 80.0)
 			{
-			pp.SetSpeed(tv,rv);
-			}	
+				pp.SetSpeed(20,-50);
+			}
+			else
+			{
+				if(distance_left < 18.0 || distance_right < 18.0 || distance_center < 18.0)
+				{
+					pp.SetSpeed(0,0);
+				}
+				else
+				{
+					pp.SetSpeed(tv,rv);
+				}
+			}
+		}
+
 	}
 
 }

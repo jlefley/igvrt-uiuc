@@ -69,7 +69,7 @@ while True:
             else:
                 break
             l = l - 1
-        while True
+        #while True:
     #cv.cvInRangeS(img, (h-10,s-40,v-20,0), (h+10,s+40,v+20,0), thresh)
     result = cv.cvCreateImage(cv.cvSize(IMGW,IMGH),8,3)
     cv.cvSetZero(result)

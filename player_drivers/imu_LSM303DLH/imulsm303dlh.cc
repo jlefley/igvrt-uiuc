@@ -205,9 +205,9 @@ void IMULSM303DLHDriver::publishIMUSonarData()
 	imudata.pose.pz = 0;
 	imudata.pose.proll = 0;
 	imudata.pose.ppitch = 0;
-	imudata.pose.pyaw = this->s.getHeading();
+	imudata.pose.pyaw = (this->s.getHeading() - 90);
 
-	cout << "Heading: " << this->s.getHeading() << " degrees" <<endl;
+	//cout << "Heading: " << this->s.getHeading() << " degrees" <<endl;
 
 	this->Publish(this->imu_addr, PLAYER_MSGTYPE_DATA, PLAYER_IMU_DATA_STATE, (void*)&imudata, sizeof(imudata), NULL);
 
@@ -223,9 +223,9 @@ void IMULSM303DLHDriver::publishIMUSonarData()
 	sonardata.ranges_count = 3;
 	sonardata.ranges = sonararr;
 
-	cout << "Distance Right: " << sonararr[2] << " inches" << endl;
-	cout << "Distance Left: " << sonararr[1] << " inches" << endl;
-	cout << "Distance Center: " << sonararr[0] << " inches" << endl;
+	//cout << "Distance Right: " << sonararr[2] << " inches" << endl;
+	//cout << "Distance Left: " << sonararr[1] << " inches" << endl;
+	//cout << "Distance Center: " << sonararr[0] << " inches" << endl;
 
 	this->Publish(this->sonar_addr, PLAYER_MSGTYPE_DATA, PLAYER_SONAR_DATA_RANGES, (void*)&sonardata, sizeof(sonardata), NULL);
 

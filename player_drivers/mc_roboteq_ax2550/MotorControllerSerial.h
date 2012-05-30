@@ -39,6 +39,7 @@ public:
 	bool recvUntilMsg(const vector<unsigned char> & msg, unsigned int maxBytes);
 	bool recvUntilWatchdog(unsigned int maxBytes);
 	bool enterSerialMode();
+	bool restart();
 	bool recvSensorData();
 	bool recvBatteryVoltage();
 	bool recvMotorValues();

@@ -65,7 +65,7 @@ def main(): # ctrl+c to end
     highgui.cvCreateTrackbar("Dilate", "Camera 1", d, 30, tb_d)
     highgui.cvCreateTrackbar("Erode", "Camera 1", e, 30, tb_e)
     
-    cap = highgui.cvCreateCameraCapture(0)
+    cap = highgui.cvCreateCameraCapture(1)
     highgui.cvSetCaptureProperty(cap, highgui.CV_CAP_PROP_FRAME_WIDTH, IMGW)
     highgui.cvSetCaptureProperty(cap, highgui.CV_CAP_PROP_FRAME_HEIGHT, IMGH)
     c = 0

@@ -171,6 +171,8 @@ bool MotorControllerSerial::sendSingleMotorCmd(double val, int motorInd)
 	msg[3] = val_str[1];
 	msg[4] = '\r';
 
+	cout << "msg: " << msg[1] << msg[2] << msg[3] << endl;
+
 	if(!sendBytes(msg))
 		return false;
 
@@ -252,6 +254,29 @@ bool MotorControllerSerial::enterSerialMode()
 		return false;
 
 	return recvUntilWatchdog(4096);
+}
+
+
+bool MotorControllerSerial::restart()
+{
+
+	vector<unsigned char> msg(8);
+
+	msg[0] = '%';
+	msg[1] = 'r';
+	msg[2] = 'r';
+	msg[3] = 'r';
+	msg[4] = 'r';
+	msg[5] = 'r';
+	msg[6] = 'r';
+	msg[7] = '\r';
+
+	if(!sendBytes(msg))
+		return false;
+
+	cout << "restarting" << endl;
+
+	return true;
 }
 
 unsigned char MotorControllerSerial::evenParity(unsigned char d)

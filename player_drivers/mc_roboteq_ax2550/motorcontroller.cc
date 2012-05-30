@@ -48,6 +48,7 @@ private:
 	double ox, oy, oa; // Integrated odometric position [m m rad]
 	timeval start, stop, result; // Time during each odometric position updating
 	bool init_time; // A flag of whether the timer is initialized
+	bool flag1; //Flag for estop handling
 };
 
 // A factory creation function, declared outside of the class so that it
@@ -101,7 +102,7 @@ MotorControllerDriver::MotorControllerDriver(ConfigFile* cf, int section)
 			return;
 		}
 	}
-	/*
+
 	memset(&this->dio_addr,0,sizeof(player_devaddr_t));
 
 	// Do we create a dio (digital I/O) interface?
@@ -114,7 +115,7 @@ MotorControllerDriver::MotorControllerDriver(ConfigFile* cf, int section)
 			return;
 		}
 	}
-	*/
+
 	// Read options from the configuration file
 	this->serial_port = cf->ReadString(section, "port", "/dev/ttyS0");
 
@@ -130,6 +131,8 @@ int MotorControllerDriver::MainSetup()
 {
 	PLAYER_MSG0(0, "Motor Controller driver starting up...");
 
+	flag1 = 0;	
+	
 	// connect to motor controller
 	this->m.connect(this->serial_port, 9600);
 	this->m.flush();
@@ -141,6 +144,7 @@ int MotorControllerDriver::MainSetup()
 	init_time = false; // Timer has not yet been initilized
 
 	// tell the controller to enter serial mode
+	/*	
 	bool serialModeSuccess = false;
 	for(int i=0; i < 10; i++)
 	{
@@ -160,7 +164,7 @@ int MotorControllerDriver::MainSetup()
 		PLAYER_ERROR("CANNOT ENTER SERIAL MODE!!!!");
 		return 1;
 	}
-
+	*/
 	// setup ok
 	PLAYER_MSG0(0, "Motor Controller driver ready.");
 
@@ -224,7 +228,7 @@ int MotorControllerDriver::ProcessMessage(QueuePointer & resp_queue, player_msgh
 		this->Publish(this->position_addr, resp_queue, PLAYER_MSGTYPE_RESP_ACK, PLAYER_POSITION2D_REQ_GET_GEOM, (void*)&pos_geom, sizeof pos_geom, NULL);
 		return 0;
 	}
-
+	
 	return 0;
 }
 
@@ -236,6 +240,11 @@ int MotorControllerDriver::SetSpeeds(double tv, double rv)
 
 	v_right = (int16_t)rint(tv + (MotorControllerSerial::AXEL_LENGTH_M * rv / 2.0));
 	v_left = (int16_t)rint(tv - (MotorControllerSerial::AXEL_LENGTH_M * rv / 2.0));
+
+	cout << "tv: " << tv << endl;
+	cout << "rv: " << rv << endl;
+	cout << "v_right: " << v_right << endl;
+	cout << "v_left: " << v_left << endl;
 	
 	//tv_mm = tv;
 	//rad_mm = tv/rv;
@@ -324,12 +333,12 @@ void MotorControllerDriver::Main()
 		//Get sensor data
 		if(m.recvSensorData())
 		{
-			/*std::cout << "Left motor velocity: " << m.left() << endl;
-			std::cout << "Right motor velocity: " << m.right() << endl;
-			std::cout << "Main Batt Voltage: " << m.mainVoltage() << endl;
-			std::cout << "Internal Voltage: " << m.internalVoltage() << endl;
-			std::cout << "Estop: " << m.estopState() << endl;
-			*/
+			//std::cout << "Left motor velocity: " << m.left() << endl;
+			//std::cout << "Right motor velocity: " << m.right() << endl;
+			//std::cout << "Main Batt Voltage: " << m.mainVoltage() << endl;
+			//std::cout << "Internal Voltage: " << m.internalVoltage() << endl;
+			//std::cout << "Estop: " << m.estopState() << endl;
+			
 			if(init_time == false)
       			{
       				gettimeofday(&start, NULL); // get start time
@@ -359,14 +368,40 @@ void MotorControllerDriver::Main()
 			powerdata.volts = m.mainVoltage();
 			
 			this->Publish(this->power_addr, PLAYER_MSGTYPE_DATA, PLAYER_POWER_DATA_STATE, (void*)&powerdata, sizeof(powerdata), NULL);
+
+			////////////////////////////
+			// Publish estop data
+			player_dio_data_t estopdata;
+			memset(&estopdata,0,sizeof(estopdata));
+			
+			estopdata.count = 1;
+			estopdata.bits = m.estopState();
+			
+			this->Publish(this->dio_addr, PLAYER_MSGTYPE_DATA, PLAYER_DIO_DATA_VALUES, (void*)&estopdata, sizeof(estopdata), NULL);
+
 		}
 		else
 		{
 			//m.flush();
 			//m.enterSerialMode();
 			PLAYER_ERROR("Bad motor controller sensor read");
-		}
-		
+		}			
+
+			//handel estop condition
+			while (m.estopState() == 1)
+			{
+				m.recvSensorData();
+				flag1=1;				
+			}
+
+			if (flag1 == 1)
+			{
+				flag1=0;
+				m.restart();
+				MainSetup();
+				sleep(1);
+			}
+
 		// Sleep (you might, for example, block on a read() instead)
 		usleep(10000);
 	}
