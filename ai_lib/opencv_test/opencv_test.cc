@@ -18,15 +18,12 @@ int const max_type = 4;
 int const max_BINARY_value = 255;
 
 Mat src, src_gray, dst, src1, hsv;
+Mat red, green, blue;
 MatND hist;
 char* window_name = "Threshold Demo";
 
 char* trackbar_type = "Type: \n 0: Binary \n 1: Binary Inverted \n 2: Truncate \n 3: To Zero \n 4: To Zero Inverted";
 char* trackbar_value = "Value";
-/*
-function populate_histogram
-*/
-
 
 /**
  * @function Threshold_Demo
@@ -66,8 +63,6 @@ int main(int argc, char *argv[])
         const float* ranges[] = { hranges, sranges };
 	// we compute the histogram from the 0-th and 1-st channels
         int channels[] = {0, 1};
-	
-
 
 
 	VideoCapture cap(1);
@@ -75,7 +70,7 @@ int main(int argc, char *argv[])
 	if(!cap.isOpened())
 		return -1;
 
-
+	Mat red = 
 
 	/// Create a window to display results
 	namedWindow( window_name, CV_WINDOW_AUTOSIZE );

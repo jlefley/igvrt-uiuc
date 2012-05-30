@@ -205,7 +205,15 @@ void IMULSM303DLHDriver::publishIMUSonarData()
 	imudata.pose.pz = 0;
 	imudata.pose.proll = 0;
 	imudata.pose.ppitch = 0;
-	imudata.pose.pyaw = (this->s.getHeading() - 90);
+	
+	if (this->s.getHeading() - 90 < 0 )
+	{
+		imudata.pose.pyaw = this->s.getHeading() + 270;
+	}
+	else
+	{
+		imudata.pose.pyaw = (this->s.getHeading() - 90);
+	}
 
 	//cout << "Heading: " << this->s.getHeading() << " degrees" <<endl;
 

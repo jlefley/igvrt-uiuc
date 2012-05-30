@@ -171,7 +171,7 @@ bool MotorControllerSerial::sendSingleMotorCmd(double val, int motorInd)
 	msg[3] = val_str[1];
 	msg[4] = '\r';
 
-	cout << "msg: " << msg[1] << msg[2] << msg[3] << endl;
+	//cout << "msg: " << msg[1] << msg[2] << msg[3] << endl;
 
 	if(!sendBytes(msg))
 		return false;

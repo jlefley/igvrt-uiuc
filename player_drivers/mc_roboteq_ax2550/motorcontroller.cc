@@ -241,10 +241,10 @@ int MotorControllerDriver::SetSpeeds(double tv, double rv)
 	v_right = (int16_t)rint(tv + (MotorControllerSerial::AXEL_LENGTH_M * rv / 2.0));
 	v_left = (int16_t)rint(tv - (MotorControllerSerial::AXEL_LENGTH_M * rv / 2.0));
 
-	cout << "tv: " << tv << endl;
-	cout << "rv: " << rv << endl;
-	cout << "v_right: " << v_right << endl;
-	cout << "v_left: " << v_left << endl;
+	//cout << "tv: " << tv << endl;
+	//cout << "rv: " << rv << endl;
+	//cout << "v_right: " << v_right << endl;
+	//cout << "v_left: " << v_left << endl;
 	
 	//tv_mm = tv;
 	//rad_mm = tv/rv;
