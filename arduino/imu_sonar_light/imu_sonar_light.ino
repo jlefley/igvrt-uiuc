@@ -50,9 +50,13 @@ void setup() {
     sei();
   
   
+  // Old calibration values
+  //compass.m_max.x = +353; compass.m_max.y = +532; compass.m_max.z = +454;
+  //compass.m_min.x = -813; compass.m_min.y = -651; compass.m_min.z = -5429;
+  
   // Calibration values
-  compass.m_max.x = +353; compass.m_max.y = +532; compass.m_max.z = +454;
-  compass.m_min.x = -813; compass.m_min.y = -651; compass.m_min.z = -529;
+  compass.m_max.x = +451; compass.m_max.y = +654; compass.m_max.z = +494;
+  compass.m_min.x = -816; compass.m_min.y = -621; compass.m_min.z = -557;
   
   //Allow sonar sensors to calibrate
   digitalWrite(CENTER_SONAR_RX,HIGH);

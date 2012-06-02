@@ -16,11 +16,20 @@ int threshold_type = 3;;
 int const max_value = 255;
 int const max_type = 4;
 int const max_BINARY_value = 255;
+double thresh = 230; // Thresholding value for split channels
 
 Mat src, src_gray, dst, src1, hsv;
 Mat red, green, blue;
 MatND hist;
 char* window_name = "Threshold Demo";
+vector<Mat> planes;
+Mat lines;
+Mat lines2;
+vector<vector<Point> > countours;
+int numContours = 0;
+vector<Vec4f> fitLines;
+Vec4f line1;
+CvPoint pt1,pt2;
 
 char* trackbar_type = "Type: \n 0: Binary \n 1: Binary Inverted \n 2: Truncate \n 3: To Zero \n 4: To Zero Inverted";
 char* trackbar_value = "Value";
@@ -64,13 +73,10 @@ int main(int argc, char *argv[])
 	// we compute the histogram from the 0-th and 1-st channels
         int channels[] = {0, 1};
 
-
 	VideoCapture cap(1);
-	
+
 	if(!cap.isOpened())
 		return -1;
-
-	Mat red = 
 
 	/// Create a window to display results
 	namedWindow( window_name, CV_WINDOW_AUTOSIZE );
@@ -84,6 +90,7 @@ int main(int argc, char *argv[])
 	Mat edges1;
 	Mat edges2;
 
+	namedWindow("hsv", 1);
 	namedWindow("original",1);
 	namedWindow( "H-S Histogram", 1 );
 	namedWindow("canny0",1);
@@ -100,7 +107,53 @@ int main(int argc, char *argv[])
 
 		//thresholding
 		cvtColor(src,src_gray,CV_BGR2GRAY);
-		
+
+		split(src, planes);
+
+		imshow("Blue" , planes[0]); // Blue
+		imshow("Green",planes[1]); // Green
+		imshow("Red",planes[2]); // Red
+
+		GaussianBlur(planes[0],planes[0],Size(0,0),2,2);
+		GaussianBlur(planes[1],planes[1],Size(0,0),2,2);
+		GaussianBlur(planes[2],planes[2],Size(0,0),2,2);
+
+		threshold(planes[0], planes[0], thresh, 255.0, 0);
+		threshold(planes[1], planes[1], thresh, 255.0, 0);
+		threshold(planes[2], planes[2], thresh, 255.0, 0);
+
+		imshow("Blue_thresh" , planes[0]); // Blue
+		imshow("Green_thresh",planes[1]); // Green
+		imshow("Red_thresh",planes[2]); // Red
+
+		lines = planes[0] & planes[1] & planes[2];
+		lines2 = lines.clone();
+
+		findContours(lines, countours, CV_RETR_LIST, CV_CHAIN_APPROX_NONE);
+
+		drawContours(lines, countours, -1, CV_RGB(56, 17, 125), 10, 8);
+
+		numContours = countours.size();
+		for(counter = 0; counter < numContours; counter++)
+		{
+			line1[0] = 0.0;
+			line1[1] = 0.0;
+			line1[2] = 0.0;
+			line1[3] = 0.0;
+			fitLines.push_back(line1);
+			fitLine(countours[counter], fitLines[counter], CV_DIST_L2, 0, 0.01, 0.01);
+			line1 = fitLines[counter];
+			pt1.x = line1[2];
+			pt1.y = line1[3];
+			pt2.x = line1[2] + line1[0]*50;
+			pt2.y = line1[3] + line1[1]*50;
+			line(lines2, pt1, pt2, CV_RGB(124, 14, 65), 5, CV_AA, 0);
+		}
+
+		imshow("Composite1" , lines);
+
+		imshow("Composite2" , lines2);
+
 		//histogram
 	        cvtColor(src1, hsv, CV_BGR2HSV);
 		calcHist( &hsv, 1, channels, Mat(), // do not use mask
@@ -123,7 +176,7 @@ int main(int argc, char *argv[])
 			        CV_FILLED );
 		}
 
-    
+    		imshow("hsv", hsv);
     		imshow( "H-S Histogram", histImg );
 		//imshow("result",frame);
 		//cvtColor(frame,edges,CV_BGR2GRAY);

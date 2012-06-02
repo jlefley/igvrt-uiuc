@@ -21,8 +21,8 @@ try {
 	int stop = 0;
 	int exit = 0;
 	bool flash = 0;
-	int counter, way_target, way_counter;
-	double tol = 0.00001;
+	int counter, way_target, way_counter, way_start;
+	double tol = 0.000005;
 	ofstream writefile;
 	ifstream readfile;
 	string line;
@@ -30,8 +30,8 @@ try {
 	double tv, rv, set,error,meas, latitude, longitude, meas_latitude, meas_longitude, prev_error;
 	double way_long, way_lat;
 	int way_count = 0;
-	double A = 0.5; // p
-	double B = 0.1; // d
+	double A = 0.8; // p
+	double B = 0.0; // d
 	double C = 0.01; // i
 	double distance_center = 0.0; //distance from robot to object
 	double distance_right = 0.0;
@@ -274,6 +274,7 @@ try {
 					{
 					getline(readfile, line);
 					getline(readfile, line);
+					counter++;
 					}
 					readfile >> setprecision(15) >> way_long;
 					readfile >> setprecision(15) >> way_lat;
@@ -299,7 +300,7 @@ try {
 						cout << "actual_heading: " << meas << endl;
 						error = headingError(fmod(error + 360.0, 360.0),meas);
 						cout << error << endl;
-						rv = A * error ;//+ B * (error - prev_error);
+						rv = A * error + B * (error - prev_error);
 						cout << distance_center << endl;
 						cout << distance_right << endl;
 						cout << distance_left << endl;
@@ -337,15 +338,30 @@ try {
 				{	
 					cout << "Enter translational velocity: " << endl;
 					cin >> tv;
-					way_counter = 0;
+					cout << "Enter the starting waypoint to navigate to: " << endl;
+					cin >> way_start;
+					while (way_start >= way_count)
+					{
+						cout << "Waypoint does not exist, re-enter waypoint number: " << endl;
+						cin >> way_start;
+					}
 					readfile.open(argv[1]);
+
+					counter = 0;
+					while (counter < way_start)
+					{
+					getline(readfile, line);
+					getline(readfile, line);
+					counter++;
+					}
+
+					way_counter = way_start;
 					while (way_counter < way_count)
 					{
 						readfile >> setprecision(15) >> way_long;
 						readfile >> setprecision(15) >> way_lat;
-						cout << "way_long: " << way_long << endl;
-						cout << "way_lat: " << way_lat << endl;
-						readfile.close();
+						//cout << "way_long: " << way_long << endl;
+						//cout << "way_lat: " << way_lat << endl;
 						dp.SetOutput(1,1);					
 						robot.Read();
 						distance_center=test[0];
@@ -354,9 +370,10 @@ try {
 						meas = ii.GetPose().pyaw;
 						meas_longitude = gp.GetLongitude();
 						meas_latitude = gp.GetLatitude();
-						cout << "Longitude Error: " << abs(meas_longitude - way_long) << endl;
-						cout << "Latitude Error: " << abs(meas_latitude - way_lat) << endl;
-						cout << tol << endl;
+						//cout << "Longitude Error: " << abs(meas_longitude - way_long) << endl;
+						//cout << "Latitude Error: " << abs(meas_latitude - way_lat) << endl;
+						//cout << tol << endl;
+						cout << "Approaching Waypoint " << way_counter << endl;
 						while((abs(meas_longitude - way_long) > tol) || (abs(meas_latitude - way_lat) > tol))
 						{
 							error = (180/M_PI)*(atan2(sin((M_PI/180)*(way_long-meas_longitude))*cos((M_PI/180)*way_lat), cos((M_PI/180)*meas_latitude)*sin((M_PI/180)*way_lat)-sin((M_PI/180)*meas_latitude)*cos((M_PI/180)*way_lat)*cos((M_PI/180)*(way_long-meas_longitude))));
@@ -364,11 +381,11 @@ try {
 							cout << "heading : " << fmod(error+360.0, 360.0) << endl;
 							cout << "actual_heading: " << meas << endl;
 							error = headingError(fmod(error + 360.0, 360.0),meas);
-							cout << error << endl;
-							rv = A * error ;//+ B * (error - prev_error);
-							cout << distance_center << endl;
-							cout << distance_right << endl;
-							cout << distance_left << endl;
+							//cout << error << endl;
+							rv = A * error + B * (error - prev_error);
+							//cout << distance_center << endl;
+							//cout << distance_right << endl;
+							//cout << distance_left << endl;
 							if(distance_center < 18.0 || distance_right < 18.0 || distance_left < 18.0)
 							{
 								pp.SetSpeed(0,0);
@@ -391,10 +408,17 @@ try {
 							meas = ii.GetPose().pyaw;
 							meas_longitude = gp.GetLongitude();
 							meas_latitude = gp.GetLatitude();
-							cout << "Longitude Error: " << abs(meas_longitude - way_long) << endl;
-							cout << "Latitude Error: " << abs(meas_latitude - way_lat) << endl;
+							//cout << "Longitude Error: " << abs(meas_longitude - way_long) << endl;
+							//cout << "Latitude Error: " << abs(meas_latitude - way_lat) << endl;
 						}
-						cout << "Waypoint " << way_counter + 1 << " reached" << endl;
+						if(ep.GetInput(0) == 1)
+						{
+							cout << "E-Stop Condition" << endl;
+							pp.SetSpeed(0,0);
+							readfile.close();
+							break;
+						}
+						cout << "Waypoint " << way_counter << " reached" << endl;
 						way_counter++;
 					}
 					readfile.close();
