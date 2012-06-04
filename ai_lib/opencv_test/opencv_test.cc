@@ -17,19 +17,26 @@ int const max_value = 255;
 int const max_type = 4;
 int const max_BINARY_value = 255;
 double thresh = 230; // Thresholding value for split channels
+double thresh2 = 150;
 
 Mat src, src_gray, dst, src1, hsv;
 Mat red, green, blue;
 MatND hist;
 char* window_name = "Threshold Demo";
 vector<Mat> planes;
+vector<Mat> planes2;
 Mat lines;
 Mat lines2;
-vector<vector<Point> > countours;
+vector<vector<Point> > countours, redContours, blueContours, greenContours;
 int numContours = 0;
+int numRedContours = 0;
+int numBlueContours = 0;
+int numGreenContours = 0;
 vector<Vec4f> fitLines;
 Vec4f line1;
 CvPoint pt1,pt2;
+
+
 
 char* trackbar_type = "Type: \n 0: Binary \n 1: Binary Inverted \n 2: Truncate \n 3: To Zero \n 4: To Zero Inverted";
 char* trackbar_value = "Value";
@@ -99,8 +106,8 @@ int main(int argc, char *argv[])
 
 	while(true)
 	{
-		//Mat frame;
-		//cap >> frame;
+		Mat frame;
+		cap >> frame;
 		cap >> src;
 		cap >> src1;
 		imshow("original",src);
@@ -109,6 +116,7 @@ int main(int argc, char *argv[])
 		cvtColor(src,src_gray,CV_BGR2GRAY);
 
 		split(src, planes);
+		split(src, planes2);
 
 		imshow("Blue" , planes[0]); // Blue
 		imshow("Green",planes[1]); // Green
@@ -117,14 +125,37 @@ int main(int argc, char *argv[])
 		GaussianBlur(planes[0],planes[0],Size(0,0),2,2);
 		GaussianBlur(planes[1],planes[1],Size(0,0),2,2);
 		GaussianBlur(planes[2],planes[2],Size(0,0),2,2);
+		GaussianBlur(planes2[0],planes2[0],Size(0,0),2,2);
+		GaussianBlur(planes2[1],planes2[1],Size(0,0),2,2);
+		GaussianBlur(planes2[2],planes2[2],Size(0,0),2,2);
 
 		threshold(planes[0], planes[0], thresh, 255.0, 0);
 		threshold(planes[1], planes[1], thresh, 255.0, 0);
 		threshold(planes[2], planes[2], thresh, 255.0, 0);
 
+		threshold(planes2[0], planes2[0], thresh2, 255.0, 0);
+		threshold(planes2[1], planes2[1], thresh2, 255.0, 0);
+		threshold(planes2[2], planes2[2], thresh2, 255.0, 0);
+
 		imshow("Blue_thresh" , planes[0]); // Blue
 		imshow("Green_thresh",planes[1]); // Green
 		imshow("Red_thresh",planes[2]); // Red
+		imshow("Blue2_thresh" , planes2[0]); // Blue
+		imshow("Green2_thresh",planes2[1]); // Green
+		imshow("Red2_thresh",planes2[2]); // Red
+
+		findContours(planes2[0], blueContours, CV_RETR_LIST, CV_CHAIN_APPROX_NONE);
+		findContours(planes2[1], greenContours, CV_RETR_LIST, CV_CHAIN_APPROX_NONE);
+		findContours(planes2[2], redContours, CV_RETR_LIST, CV_CHAIN_APPROX_NONE);
+
+		drawContours(planes2[0], blueContours, -1, CV_RGB(56, 17, 125), 10, 8);
+		drawContours(planes2[1], greenContours, -1, CV_RGB(56, 17, 125), 10, 8);
+		drawContours(planes2[2], redContours, -1, CV_RGB(56, 17, 125), 10, 8);
+
+		imshow("Blue_cont" , planes2[0]); // Blue
+		imshow("Green_cont",planes2[1]); // Green
+		imshow("Red_cont",planes2[2]); // Red
+
 
 		lines = planes[0] & planes[1] & planes[2];
 		lines2 = lines.clone();
@@ -178,17 +209,17 @@ int main(int argc, char *argv[])
 
     		imshow("hsv", hsv);
     		imshow( "H-S Histogram", histImg );
-		//imshow("result",frame);
-		//cvtColor(frame,edges,CV_BGR2GRAY);
-		//GaussianBlur(edges, edges, Size(7,7), 1.5, 1.5);
-		//edges1 = edges.clone();
-		//edges2 = edges.clone();
-	        //Canny(edges, edges, 0, 30, 3);
-		//Canny(edges1, edges1, 25, 30, 3);
-		//Canny(edges2, edges2, 0, 100, 3);
-		//imshow("canny0",edges);
-		//imshow("canny1",edges1);
-		//imshow("canny2",edges2);
+		imshow("result",frame);
+		cvtColor(frame,edges,CV_BGR2GRAY);
+		GaussianBlur(edges, edges, Size(7,7), 1.5, 1.5);
+		edges1 = edges.clone();
+		edges2 = edges.clone();
+	        Canny(edges, edges, 0, 30, 3);
+		Canny(edges1, edges1, 25, 30, 3);
+		Canny(edges2, edges2, 0, 100, 3);
+		imshow("canny0",edges);
+		imshow("canny1",edges1);
+		imshow("canny2",edges2);
 		if(waitKey(30) >= 0)
 			break;
 	}

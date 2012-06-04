@@ -12,7 +12,27 @@
 using namespace PlayerCc;
 using namespace std;
 
-double headingError(double set, double meas);
+double headingError(double, double);
+double constrain(double, double, double);
+
+int sign(double val)
+{
+	if(val > 0.0)
+	{
+		return 1;
+	}
+	else
+	{
+		if(val < 0.0)
+		{
+			return -1;
+		}
+		else
+		{
+			return 0;
+		}
+	}
+}
 
 int main(int argc, char *argv[])
 {
@@ -27,12 +47,17 @@ try {
 	ifstream readfile;
 	string line;
 
-	double tv, rv, set,error,meas, latitude, longitude, meas_latitude, meas_longitude, prev_error;
+	double tv, rv, set, meas, latitude, longitude, meas_latitude, meas_longitude, target, target_heading;
+	double error = 0;
+	double prev_error = 0;
+	double integrated_error = 0;
+	double derivative_error = 0;
 	double way_long, way_lat;
 	int way_count = 0;
-	double A = 0.8; // p
-	double B = 0.0; // d
-	double C = 0.01; // i
+	double A = 0.5; // p
+	double B = 0.02; // d
+	double C = .000012; // i
+	const double GUARD_GAIN = 1e5; //i control constraint
 	double distance_center = 0.0; //distance from robot to object
 	double distance_right = 0.0;
 	double distance_left = 0.0;
@@ -105,13 +130,18 @@ try {
 					distance_right=test[2];
 					meas = ii.GetPose().pyaw;
 					error = headingError(set, meas);
-					rv = A*error;
+					cout << "Error: " << error << endl;
+					integrated_error += error;
+					cout << "Integrated error: " << integrated_error << endl;
+					derivative_error = error - prev_error;
+					cout << "Differentiated error: " << derivative_error << endl;
+					rv = A*error + B*derivative_error + C*constrain(integrated_error, -GUARD_GAIN, GUARD_GAIN);
 
-					cout << "Heading: " << meas << endl;
+					//cout << "Heading: " << meas << endl;
 		
-					cout << "Error :" << error << endl;
+					//cout << "Error :" << error << endl;
 
-					cout << "rv: " << rv << endl;
+					//cout << "rv: " << rv << endl;
 
 					//pp.SetSpeed(30,0);
 					if(distance_center < 48.0 && distance_right > 80.0)
@@ -124,7 +154,7 @@ try {
 					}
 
 
-					if(distance_center < 18.0 || distance_right < 18.0 || distance_left < 18.0)
+					if(distance_center < 18.0 /*|| distance_right < 18.0 || distance_left < 18.0*/)
 					{
 						pp.SetSpeed(0,0);
 					}
@@ -132,14 +162,14 @@ try {
 					{
 						pp.SetSpeed(tv,rv);	
 					}
-					
-					cout << ep.GetInput(0) << endl;
+	
 					if(ep.GetInput(0) == 1)
 					{
 						cout << "E-Stop Condition" << endl;
 						pp.SetSpeed(0,0);
 						break;
 					}
+					prev_error = error;
 				}
 				break;
 			case 'g':
@@ -296,14 +326,18 @@ try {
 					{
 						error = (180/M_PI)*(atan2(sin((M_PI/180)*(way_long-meas_longitude))*cos((M_PI/180)*way_lat), cos((M_PI/180)*meas_latitude)*sin((M_PI/180)*way_lat)-sin((M_PI/180)*meas_latitude)*cos((M_PI/180)*way_lat)*cos((M_PI/180)*(way_long-meas_longitude))));
 
-						cout << "heading : " << fmod(error+360.0, 360.0) << endl;
-						cout << "actual_heading: " << meas << endl;
+						//cout << "heading : " << fmod(error+360.0, 360.0) << endl;
+						//cout << "actual_heading: " << meas << endl;
 						error = headingError(fmod(error + 360.0, 360.0),meas);
-						cout << error << endl;
-						rv = A * error + B * (error - prev_error);
-						cout << distance_center << endl;
-						cout << distance_right << endl;
-						cout << distance_left << endl;
+						integrated_error += error;
+						cout << "Integrated error: " << integrated_error << endl;
+						derivative_error = error - prev_error;
+						cout << "Differentiated error: " << derivative_error << endl;
+						rv = A*error + B*derivative_error + C*constrain(integrated_error, -GUARD_GAIN, GUARD_GAIN);
+
+						//cout << distance_center << endl;
+						//cout << distance_right << endl;
+						//cout << distance_left << endl;
 						if(distance_center < 18.0 || distance_right < 18.0 || distance_left < 18.0)
 						{
 							pp.SetSpeed(0,0);
@@ -374,24 +408,33 @@ try {
 						//cout << "Latitude Error: " << abs(meas_latitude - way_lat) << endl;
 						//cout << tol << endl;
 						cout << "Approaching Waypoint " << way_counter << endl;
+						//target = (180/M_PI)*(atan2(sin((M_PI/180)*(way_long-meas_longitude))*cos((M_PI/180)*way_lat), cos((M_PI/180)*meas_latitude)*sin((M_PI/180)*way_lat)-sin((M_PI/180)*meas_latitude)*cos((M_PI/180)*way_lat)*cos((M_PI/180)*(way_long-meas_longitude))));
+						//target_heading = fmod(target + 360.0, 360.0);
 						while((abs(meas_longitude - way_long) > tol) || (abs(meas_latitude - way_lat) > tol))
 						{
-							error = (180/M_PI)*(atan2(sin((M_PI/180)*(way_long-meas_longitude))*cos((M_PI/180)*way_lat), cos((M_PI/180)*meas_latitude)*sin((M_PI/180)*way_lat)-sin((M_PI/180)*meas_latitude)*cos((M_PI/180)*way_lat)*cos((M_PI/180)*(way_long-meas_longitude))));
+							//error = (180/M_PI)*(atan2(sin((M_PI/180)*(way_long-meas_longitude))*cos((M_PI/180)*way_lat), cos((M_PI/180)*meas_latitude)*sin((M_PI/180)*way_lat)-sin((M_PI/180)*meas_latitude)*cos((M_PI/180)*way_lat)*cos((M_PI/180)*(way_long-meas_longitude))));
 
-							cout << "heading : " << fmod(error+360.0, 360.0) << endl;
-							cout << "actual_heading: " << meas << endl;
-							error = headingError(fmod(error + 360.0, 360.0),meas);
-							//cout << error << endl;
-							rv = A * error + B * (error - prev_error);
-							//cout << distance_center << endl;
-							//cout << distance_right << endl;
-							//cout << distance_left << endl;
-							if(distance_center < 18.0 || distance_right < 18.0 || distance_left < 18.0)
+							target = (180/M_PI)*(atan2(sin((M_PI/180)*(way_long-meas_longitude))*cos((M_PI/180)*way_lat), cos((M_PI/180)*meas_latitude)*sin((M_PI/180)*way_lat)-sin((M_PI/180)*meas_latitude)*cos((M_PI/180)*way_lat)*cos((M_PI/180)*(way_long-meas_longitude))));
+						target_heading = fmod(target + 360.0, 360.0);
+
+							
+							error = headingError(target_heading,meas);
+							//cout << "Error: " << error << endl;
+							integrated_error += error;
+							//cout << "Integrated error: " << integrated_error << endl;
+							derivative_error = error - prev_error;
+							//cout << "Differentiated error: " << derivative_error << endl;
+							rv = A*error + B*derivative_error + C*constrain(integrated_error, -GUARD_GAIN, GUARD_GAIN);
+
+							if(distance_center < 18.0 /*|| distance_right < 18.0 || distance_left < 18.0*/)
 							{
 								pp.SetSpeed(0,0);
 							}
 							else
 							{
+								if(tv > 20 && rv > 10)
+								{
+								pp.SetSpeed(0, 50*sign(rv));
 								pp.SetSpeed(tv,rv);	
 							}
 				
@@ -429,6 +472,7 @@ try {
 				else if (way_opt == 'c')
 				{
 					writefile.open(argv[1], ios::trunc);
+					cout << "erasing" << endl;
 					writefile.close();
 					break;				
 				}
@@ -476,6 +520,23 @@ double headingError(double set, double meas)
 		
 }
 
-
+double constrain(double value, double min, double max)
+{
+	if(value > min)
+	{
+		if(value < max)
+		{
+			return value;
+		}
+		else
+		{
+			return max;
+		}
+	}
+	else
+	{
+		return min;
+	}
+} 
 
 

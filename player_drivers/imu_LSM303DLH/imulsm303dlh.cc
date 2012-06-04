@@ -47,6 +47,7 @@ private:
 	player_devaddr_t sonar_addr; //address of sonar interface
 	player_devaddr_t dio_addr; //address of digital i/o interface
 	imulsm303dlhSerial s; // low level serial interface to imu/sonar data
+	double headings[3];
 };
 
 // A factory creation function, declared outside of the class so that it
@@ -125,6 +126,10 @@ int IMULSM303DLHDriver::MainSetup()
 	this->s.flush();
     
 	PLAYER_MSG0(0, "IMU LSM303DLH/Sonar driver ready.");
+
+	headings[0] = -1.0;
+	headings[1] = -1.0;
+	headings[2] = -1.0;
 
 	return 0;
 }
@@ -215,7 +220,24 @@ void IMULSM303DLHDriver::publishIMUSonarData()
 		imudata.pose.pyaw = (this->s.getHeading() - 90);
 	}
 
-	//cout << "Heading: " << this->s.getHeading() << " degrees" <<endl;
+	if(headings[0] == -1.0 && headings[1] == -1.0 && headings[2] == -1.0)
+	{
+	headings[0] = imudata.pose.pyaw;
+	headings[1] = imudata.pose.pyaw;
+	headings[2] = imudata.pose.pyaw;
+	}
+	else
+	{
+	headings[2] = headings[1];
+	headings[1] = headings[0];
+	headings[0] = imudata.pose.pyaw;
+	}
+
+	imudata.pose.pyaw = (headings[0] + headings[1] + headings[2]) / 3.0;
+
+	//imudata.pose.pyaw = this->s.getHeading();
+	
+	cout << "Heading: " << imudata.pose.pyaw << " degrees" <<endl;
 
 	this->Publish(this->imu_addr, PLAYER_MSGTYPE_DATA, PLAYER_IMU_DATA_STATE, (void*)&imudata, sizeof(imudata), NULL);
 
