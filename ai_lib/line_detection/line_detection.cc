@@ -24,8 +24,11 @@ Mat lines_right, right1;
 vector<vector<Point> > countours_left, countours_right;
 vector<vector<Point> >::iterator it, it2;
 vector<Vec4f> fitLines_left, fitLines_right;
+vector<CvPoint> sort_left, sort_right;
+vector<CvPoint>::iterator it3;
 Vec4f line1;
 CvPoint pt1,pt2;
+vector<Point> a, b;
 
 Point2f src_left[4], src_right[4], dst_left[4], dst_right[4];
 int pt_ind_left = 0;
@@ -182,9 +185,20 @@ int main(int argc, char *argv[])
 			line1 = fitLines_left[counter];
 			pt1.x = line1[2];
 			pt1.y = line1[3];
-			pt2.x = line1[2] + line1[0]*500;
+			
+			it3 = sort_left.begin();
+			while(it3 != sort_left.end())
+			{
+				if((*it3).y > pt1.y)
+				{
+					break;
+				}
+				it++;
+			}
+			sort_left.insert(it3, pt1);
+			/*pt2.x = line1[2] + line1[0]*500;
 			pt2.y = line1[3] + line1[1]*500;
-			line(left1, pt1, pt2, CV_RGB(124, 14, 65), 5, CV_AA, 0);
+			line(left1, pt1, pt2, CV_RGB(124, 14, 65), 5, CV_AA, 0);*/
 		}
 
 		for(counter = 0; counter < countours_right.size(); counter++)
@@ -199,9 +213,30 @@ int main(int argc, char *argv[])
 			line1 = fitLines_right[counter];
 			pt1.x = line1[2];
 			pt1.y = line1[3];
-			pt2.x = line1[2] + line1[0]*500;
+			
+			it3 = sort_right.begin();
+			while(it3 != sort_right.end())
+			{
+				if((*it3).y > pt1.y)
+				{
+					break;
+				}
+				it++;
+			}
+			sort_right.insert(it3, pt1);
+			/*pt2.x = line1[2] + line1[0]*500;
 			pt2.y = line1[3] + line1[1]*500;
-			line(right1, pt1, pt2, CV_RGB(124, 14, 65), 5, CV_AA, 0);
+			line(right1, pt1, pt2, CV_RGB(124, 14, 65), 5, CV_AA, 0);*/
+		}
+
+		for(counter = 0; counter < sort_left.size() - 1; counter++)
+		{
+			line(left1, sort_left[counter], sort_left[counter + 1], CV_RGB(124, 14, 65), 5, CV_AA, 0);
+		}
+
+		for(counter = 0; counter < sort_right.size() - 1; counter++)
+		{
+			line(right1, sort_right[counter], sort_right[counter + 1], CV_RGB(124, 14, 65), 5, CV_AA, 0);
 		}
 
 		imshow("Left", leftim);
