@@ -20,7 +20,7 @@ void my_mouse_callback(int event, int x, int y, int flags, void* param);
 
 int main(int argc, char *argv[])
 {
-	VideoCapture cap(1);
+	VideoCapture cap(-1);
 	
 	if(!cap.isOpened())
 		return -1;

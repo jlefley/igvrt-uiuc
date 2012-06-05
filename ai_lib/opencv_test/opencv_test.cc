@@ -80,7 +80,7 @@ int main(int argc, char *argv[])
 	// we compute the histogram from the 0-th and 1-st channels
         int channels[] = {0, 1};
 
-	VideoCapture cap(1);
+	VideoCapture cap(-1);
 
 	if(!cap.isOpened())
 		return -1;

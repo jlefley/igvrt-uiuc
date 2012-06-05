@@ -182,8 +182,8 @@ int main(int argc, char *argv[])
 			line1 = fitLines_left[counter];
 			pt1.x = line1[2];
 			pt1.y = line1[3];
-			pt2.x = line1[2] + line1[0]*50;
-			pt2.y = line1[3] + line1[1]*50;
+			pt2.x = line1[2] + line1[0]*500;
+			pt2.y = line1[3] + line1[1]*500;
 			line(left1, pt1, pt2, CV_RGB(124, 14, 65), 5, CV_AA, 0);
 		}
 
@@ -199,8 +199,8 @@ int main(int argc, char *argv[])
 			line1 = fitLines_right[counter];
 			pt1.x = line1[2];
 			pt1.y = line1[3];
-			pt2.x = line1[2] + line1[0]*50;
-			pt2.y = line1[3] + line1[1]*50;
+			pt2.x = line1[2] + line1[0]*500;
+			pt2.y = line1[3] + line1[1]*500;
 			line(right1, pt1, pt2, CV_RGB(124, 14, 65), 5, CV_AA, 0);
 		}
 
