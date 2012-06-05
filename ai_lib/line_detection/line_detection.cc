@@ -11,10 +11,10 @@ using namespace PlayerCc;
 using namespace std;
 using namespace cv;
 
-double thresh = 230; 
-double thresh2 = 150;
+int thresh = 125; 
+int thresh2 = 125;
 
-const double cutoff = 100.0;
+int cutoff = 1000;
 
 Mat leftim, rightim, centerim, trans_left, trans_right, frame_trans_left, frame_trans_right;
 vector<Mat> planes_left;
@@ -62,6 +62,11 @@ int main(int argc, char *argv[])
 
 	createTrackbar("t1", "Calibrate Right", &x_right, 1000, 0, NULL);
 	cvSetMouseCallback("Calibrate Right", my_mouse_callback_right, NULL);
+
+	createTrackbar("t_l", "Composite Left", &thresh2, 255, 0, NULL);
+	createTrackbar("cutoff", "Composite Left", &cutoff, 10000, 0, NULL);
+	createTrackbar("t_r", "Composite Right", &thresh, 255, 0, NULL);
+	createTrackbar("cutoff", "Composite Right", &cutoff, 10000, 0, NULL);
 
 	while(true)
 	{
