@@ -432,10 +432,21 @@ try {
 							}
 							else
 							{
-								if(tv > 20 && rv > 10)
+								if(rv > 50)
 								{
-								pp.SetSpeed(0, 50*sign(rv));
-								pp.SetSpeed(tv,rv);	
+								pp.SetSpeed(5, rv);
+								}
+								else
+								{
+									if(rv < -50)
+									{
+									pp.SetSpeed(5,rv);
+									}
+									else
+									{
+									pp.SetSpeed(tv,rv);
+									}
+								}
 							}
 				
 							robot.Read();

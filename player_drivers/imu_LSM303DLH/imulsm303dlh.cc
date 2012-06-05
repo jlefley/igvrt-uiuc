@@ -237,7 +237,7 @@ void IMULSM303DLHDriver::publishIMUSonarData()
 
 	//imudata.pose.pyaw = this->s.getHeading();
 	
-	cout << "Heading: " << imudata.pose.pyaw << " degrees" <<endl;
+	//cout << "Heading: " << imudata.pose.pyaw << " degrees" <<endl;
 
 	this->Publish(this->imu_addr, PLAYER_MSGTYPE_DATA, PLAYER_IMU_DATA_STATE, (void*)&imudata, sizeof(imudata), NULL);
 
