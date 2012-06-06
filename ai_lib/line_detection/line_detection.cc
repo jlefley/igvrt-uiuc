@@ -40,8 +40,17 @@ int pt_ind_right = 0;
 int x_left = 100;
 int x_right = 100;
 
+int flag_left = 0;
+int flag_right = 0;
+
+double cal_dist_left, cal_dist_right; // Pixel distance coresponding to cal_dist ft
+double cal_dist = 2.0;
+
+double real_dist_left, real_dist_right;
+
 void my_mouse_callback_left(int event, int x, int y, int flags, void* param);
 void my_mouse_callback_right(int event, int x, int y, int flags, void* param);
+double df(int x1, int y1, int x2, int y2);
 
 int main(int argc, char *argv[])
 {
@@ -49,12 +58,12 @@ int main(int argc, char *argv[])
 	namedWindow("Right",1);
 	namedWindow("Composite Left",1);
 	namedWindow("Composite Right",1);
-	namedWindow("Lines Left",1);
-	namedWindow("Lines Right",1);
+	//namedWindow("Lines Left",1);
+	//namedWindow("Lines Right",1);
 	namedWindow("Calibrate Left", 1);
 	namedWindow("Calibrate Right", 1);
-	namedWindow("Cont_Left", 1);
-	namedWindow("Cont_Right", 1);
+	//namedWindow("Cont_Left", 1);
+	//namedWindow("Cont_Right", 1);
 
 	int counter = 0;
 	int counter2 = 0;
@@ -69,16 +78,16 @@ int main(int argc, char *argv[])
 	if(!cap1.isOpened() || !cap2.isOpened() || !cap3.isOpened())
 		return -1;
 
-	createTrackbar("t0", "Calibrate Left", &x_left, 1000, 0, NULL);
+	createTrackbar("CAL_SCALE", "Calibrate Left", &x_left, 1000, 0, NULL);
 	cvSetMouseCallback("Calibrate Left", my_mouse_callback_left, NULL);
 
-	createTrackbar("t1", "Calibrate Right", &x_right, 1000, 0, NULL);
+	createTrackbar("CAL_SCALE", "Calibrate Right", &x_right, 1000, 0, NULL);
 	cvSetMouseCallback("Calibrate Right", my_mouse_callback_right, NULL);
 
-	createTrackbar("t_l", "Composite Left", &thresh2, 255, 0, NULL);
-	createTrackbar("cutoff", "Composite Left", &cutoff, 10000, 0, NULL);
-	createTrackbar("t_r", "Composite Right", &thresh, 255, 0, NULL);
-	createTrackbar("cutoff", "Composite Right", &cutoff, 10000, 0, NULL);
+	createTrackbar("THRESH_VALUE", "Calibrate Left", &thresh2, 255, 0, NULL);
+	createTrackbar("CUTOFF_VALUE", "Calibrate Left", &cutoff, 10000, 0, NULL);
+	createTrackbar("THRESH_VALUE", "Calibrate Right", &thresh, 255, 0, NULL);
+	createTrackbar("CUTOFF_VALUE", "Calibrate Right", &cutoff, 10000, 0, NULL);
 
 	while(true)
 	{
@@ -179,8 +188,12 @@ int main(int argc, char *argv[])
 			}
 		}
 
-		drawContours(cont_left, countours_left, -1, CV_RGB(56, 17, 125), 10, 8);
-		drawContours(cont_right, countours_right, -1, CV_RGB(56, 17, 125), 10, 8);
+		cont_left = Mat::zeros(lines_left.rows, lines_left.cols, lines_left.type());
+		cont_right = Mat::zeros(lines_right.rows, lines_right.cols, lines_right.type());
+
+		drawContours(cont_left, countours_left, -1, CV_RGB(255, 255, 255), 10, 8);
+		drawContours(cont_right, countours_right, -1, CV_RGB(255, 255, 255), 10, 8);
+
 		/*
 		sort_left.clear();
 		sort_right.clear();
@@ -255,12 +268,10 @@ int main(int argc, char *argv[])
 
 		imshow("Left", leftim);
 		imshow("Right", rightim);
-		imshow("Composite Left" , lines_left);
-		imshow("Composite Right" , lines_right);
-		imshow("Cont_Left", cont_left);
-		imshow("Cont_Right", cont_left);
-
-		
+		imshow("Composite Left" , cont_left);
+		imshow("Composite Right" , cont_right);
+		//imshow("Cont_Left", cont_left);
+		//imshow("Cont_Right", cont_right);
 
 		/*cout << sort_left.size() << " " << sort_right.size() << endl;
 		imshow("Lines Left" , left1);
@@ -268,34 +279,47 @@ int main(int argc, char *argv[])
 
 		if(pt_ind_left >= 4)
 		{
-			//scales with the center of selection as scaling center
-			dst_left[0].x = (-1)*x_left+320;    //3*x
-			dst_left[0].y = (1)*x_left+240;
+			if(flag_left == 0)
+			{
+				//scales with the center of selection as scaling center
+				dst_left[0].x = (-1)*x_left+320;    //3*x
+				dst_left[0].y = (1)*x_left+240;
 
-			dst_left[1].x = (-1)*x_left+320;    //3*x
-			dst_left[1].y = (-1)*x_left+240;
+				dst_left[1].x = (-1)*x_left+320;    //3*x
+				dst_left[1].y = (-1)*x_left+240;
 	
-			dst_left[2].x = (1)*x_left+320;
-			dst_left[2].y = (-1)*x_left+240;
+				dst_left[2].x = (1)*x_left+320;
+				dst_left[2].y = (-1)*x_left+240;
 
-			dst_left[3].x = (1)*x_left+320;
-			dst_left[3].y = (1)*x_left+240;
+				dst_left[3].x = (1)*x_left+320;
+				dst_left[3].y = (1)*x_left+240;
 
+				cal_dist_left = (df(src_left[0].x, src_left[0].y, src_left[1].x, src_left[1].y) +
+					     df(src_left[1].x, src_left[1].y, src_left[2].x, src_left[2].y) +
+					     df(src_left[2].x, src_left[2].y, src_left[3].x, src_left[3].y) +
+					     df(src_left[3].x, src_left[3].y, src_left[0].x, src_left[0].y))*0.25;
+			
+				cal_dist_left = cal_dist / cal_dist_left;	
+			
+				trans_left = getPerspectiveTransform(src_left,dst_left);
+				flag_left = 1;
+			}
 
-			trans_left = getPerspectiveTransform(src_left,dst_left);
 			warpPerspective(cont_left,frame_trans_left,trans_left,cont_left.size());
 			imshow("Calibrate Left",frame_trans_left);
-			for(counter = 0; counter < frame_trans_left.rows(); counter++)
+			dist_left = 639;
+			for(counter = 0; counter < frame_trans_left.rows; counter++)
 			{
-				for(counter2 = 0; counter2 < frame_trans_left.cols(); counter2++)
+				for(counter2 = 0; counter2 < frame_trans_left.cols; counter2++)
 				{
-					if(frame_trans_left.at<int>(counter2, counter) == 255 && dist_left < counter2)
+					if(frame_trans_left.at<bool>(counter, counter2) == 255 && dist_left > (639 - counter2))
 						{
-						dist_left = counter2;
+						dist_left = 639 - counter2;
 						}
 				}
 			}
-			cout << "dist_left: " << dist_left << endl;
+			real_dist_left = cal_dist_left * dist_left;
+			cout << "Left distance: " << real_dist_left << endl;
 		}
 		else
 		{
@@ -305,34 +329,47 @@ int main(int argc, char *argv[])
 		
 		if(pt_ind_right >= 4)
 		{
-			//scales with the center of selection as scaling center
-			dst_right[0].x = (-1)*x_right+320;    //3*x
-			dst_right[0].y = (1)*x_right+240;
+			if(flag_right == 0)
+			{
+				//scales with the center of selection as scaling center
+				dst_right[0].x = (-1)*x_right+320;    //3*x
+				dst_right[0].y = (1)*x_right+240;
 
-			dst_right[1].x = (-1)*x_right+320;    //3*x
-			dst_right[1].y = (-1)*x_right+240;
+				dst_right[1].x = (-1)*x_right+320;    //3*x
+				dst_right[1].y = (-1)*x_right+240;
 	
-			dst_right[2].x = (1)*x_right+320;
-			dst_right[2].y = (-1)*x_right+240;
+				dst_right[2].x = (1)*x_right+320;
+				dst_right[2].y = (-1)*x_right+240;
 
-			dst_right[3].x = (1)*x_right+320;
-			dst_right[3].y = (1)*x_right+240;
+				dst_right[3].x = (1)*x_right+320;
+				dst_right[3].y = (1)*x_right+240;
+			
+				cal_dist_right = (df(src_right[0].x, src_right[0].y, src_right[1].x, src_right[1].y) +
+					     df(src_right[1].x, src_right[1].y, src_right[2].x, src_right[2].y) +
+					     df(src_right[2].x, src_right[2].y, src_right[3].x, src_right[3].y) +
+					     df(src_right[3].x, src_right[3].y, src_right[0].x, src_right[0].y))*0.25;
+			
+				cal_dist_right = cal_dist / cal_dist_right;
 
+				trans_right = getPerspectiveTransform(src_right,dst_right);
+				flag_right = 1;	
+			}
 
-			trans_right = getPerspectiveTransform(src_right,dst_right);
 			warpPerspective(cont_right,frame_trans_right,trans_right,cont_right.size());
 			imshow("Calibrate Right",frame_trans_right);
-			for(counter = 0; counter < frame_trans_right.rows(); counter++)
+			dist_right = 639;
+			for(counter = 0; counter < frame_trans_right.rows; counter++)
 			{
-				for(counter2 = 0; counter2 < frame_trans_right.cols(); counter2++)
+				for(counter2 = 0; counter2 < frame_trans_right.cols; counter2++)
 				{
-					if(frame_trans_right.at<int>(counter2, counter) == 255 && dist_right < counter2)
+					if(frame_trans_right.at<bool>(counter, counter2) == 255 && dist_right > counter2)
 						{
 						dist_right = counter2;
 						}
 				}
 			}
-			cout << "dist_right: " << dist_right << endl;
+			real_dist_right = cal_dist_right * dist_right;
+			cout << "Right distance: " << real_dist_right << endl;
 		}
 		else
 		{
@@ -380,3 +417,8 @@ void my_mouse_callback_right(int event, int x, int y, int flags, void* param)
 	}
 }
 
+double df(int x1, int y1, int x2, int y2)
+{
+	
+	return sqrt(((double)x2 - (double)x1)*((double)x2 - (double)x1) + ((double)y2-(double)y1)*((double)y2-(double)y1));
+}
