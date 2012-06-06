@@ -16,11 +16,14 @@ int thresh2 = 125;
 
 int cutoff = 1000;
 
+
 Mat leftim, rightim, centerim, trans_left, trans_right, frame_trans_left, frame_trans_right;
 vector<Mat> planes_left;
 vector<Mat> planes_right;
 Mat lines_left, left1;
 Mat lines_right, right1;
+Mat cont_left;
+Mat cont_right;
 vector<vector<Point> > countours_left, countours_right;
 vector<vector<Point> >::iterator it, it2;
 vector<Vec4f> fitLines_left, fitLines_right;
@@ -50,8 +53,14 @@ int main(int argc, char *argv[])
 	namedWindow("Lines Right",1);
 	namedWindow("Calibrate Left", 1);
 	namedWindow("Calibrate Right", 1);
- 
+	namedWindow("Cont_Left", 1);
+	namedWindow("Cont_Right", 1);
+
 	int counter = 0;
+	int counter2 = 0;
+
+	int dist_left = 0;
+	int dist_right = 0;
 
 	VideoCapture cap1(1); //1
 	VideoCapture cap2(2); //2
@@ -101,8 +110,8 @@ int main(int argc, char *argv[])
 		findContours(lines_left, countours_left, CV_RETR_LIST, CV_CHAIN_APPROX_NONE);
 		findContours(lines_right, countours_right, CV_RETR_LIST, CV_CHAIN_APPROX_NONE);
 
-		left1 = lines_left.clone();
-		right1 = lines_right.clone();		
+		//left1 = lines_left.clone();
+		//right1 = lines_right.clone();		
 
 		it = countours_left.begin();
 		while(it != countours_left.end())
@@ -170,9 +179,9 @@ int main(int argc, char *argv[])
 			}
 		}
 
-		drawContours(lines_left, countours_left, -1, CV_RGB(56, 17, 125), 10, 8);
-		drawContours(lines_right, countours_right, -1, CV_RGB(56, 17, 125), 10, 8);
-
+		drawContours(cont_left, countours_left, -1, CV_RGB(56, 17, 125), 10, 8);
+		drawContours(cont_right, countours_right, -1, CV_RGB(56, 17, 125), 10, 8);
+		/*
 		sort_left.clear();
 		sort_right.clear();
 
@@ -198,10 +207,7 @@ int main(int argc, char *argv[])
 				it3++;
 			}
 			sort_left.insert(it3, pt1);
-			/*pt2.x = line1[2] + line1[0]*500;
-			pt2.y = line1[3] + line1[1]*500;
-			line(left1, pt1, pt2, CV_RGB(124, 14, 65), 5, CV_AA, 0);*/
-		}
+			}
 
 		for(counter = 0; counter < countours_right.size(); counter++)
 		{
@@ -225,9 +231,6 @@ int main(int argc, char *argv[])
 				it3++;
 			}
 			sort_right.insert(it3, pt1);
-			/*pt2.x = line1[2] + line1[0]*500;
-			pt2.y = line1[3] + line1[1]*500;
-			line(right1, pt1, pt2, CV_RGB(124, 14, 65), 5, CV_AA, 0);*/
 		}
 
 		for(counter = 0; counter < sort_left.size(); counter++)
@@ -248,16 +251,20 @@ int main(int argc, char *argv[])
 				break;
 			}
 			line(right1, sort_right[counter], sort_right[counter + 1], CV_RGB(124, 14, 65), 5, CV_AA, 0);
-		}
+		}*/
 
 		imshow("Left", leftim);
 		imshow("Right", rightim);
 		imshow("Composite Left" , lines_left);
 		imshow("Composite Right" , lines_right);
+		imshow("Cont_Left", cont_left);
+		imshow("Cont_Right", cont_left);
 
-		cout << sort_left.size() << " " << sort_right.size() << endl;
+		
+
+		/*cout << sort_left.size() << " " << sort_right.size() << endl;
 		imshow("Lines Left" , left1);
-		imshow("Lines Right" , right1);
+		imshow("Lines Right" , right1);*/
 
 		if(pt_ind_left >= 4)
 		{
@@ -276,8 +283,19 @@ int main(int argc, char *argv[])
 
 
 			trans_left = getPerspectiveTransform(src_left,dst_left);
-			warpPerspective(lines_left,frame_trans_left,trans_left,lines_left.size());
+			warpPerspective(cont_left,frame_trans_left,trans_left,cont_left.size());
 			imshow("Calibrate Left",frame_trans_left);
+			for(counter = 0; counter < frame_trans_left.rows(); counter++)
+			{
+				for(counter2 = 0; counter2 < frame_trans_left.cols(); counter2++)
+				{
+					if(frame_trans_left.at<int>(counter2, counter) == 255 && dist_left < counter2)
+						{
+						dist_left = counter2;
+						}
+				}
+			}
+			cout << "dist_left: " << dist_left << endl;
 		}
 		else
 		{
@@ -302,8 +320,19 @@ int main(int argc, char *argv[])
 
 
 			trans_right = getPerspectiveTransform(src_right,dst_right);
-			warpPerspective(lines_right,frame_trans_right,trans_right,lines_right.size());
+			warpPerspective(cont_right,frame_trans_right,trans_right,cont_right.size());
 			imshow("Calibrate Right",frame_trans_right);
+			for(counter = 0; counter < frame_trans_right.rows(); counter++)
+			{
+				for(counter2 = 0; counter2 < frame_trans_right.cols(); counter2++)
+				{
+					if(frame_trans_right.at<int>(counter2, counter) == 255 && dist_right < counter2)
+						{
+						dist_right = counter2;
+						}
+				}
+			}
+			cout << "dist_right: " << dist_right << endl;
 		}
 		else
 		{

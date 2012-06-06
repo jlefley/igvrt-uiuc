@@ -413,18 +413,6 @@ try {
 						cout << "Approaching Waypoint " << way_counter << endl;
 						while((abs(meas_longitude - way_long) > tol) || (abs(meas_latitude - way_lat) > tol))
 						{
-							/*if(distance_center < 36.0)
-							{
-								pp.SetSpeed(5,50);
-								sleep(2);
-								pp.SetSpeed(20,0);
-							}						
-							
-							if(distance_center < 18.0)
-							{
-								pp.SetSpeed(-20,0);
-								sleep(1);
-							}*/
 							target_heading = getHeading(meas_longitude, meas_latitude, way_long, way_lat);
 							error = headingError(target_heading,meas);
 							cout << getDistance(meas_longitude, meas_latitude, way_long, way_lat) << endl;
@@ -434,6 +422,26 @@ try {
 							derivative_error = error - prev_error;
 							//cout << "Differentiated error: " << derivative_error << endl;
 							rv = A*error + B*derivative_error + C*constrain(integrated_error, -GUARD_GAIN, GUARD_GAIN);
+							
+							if(distance_center < 48.0)
+							{
+								if(distance_right < 48.0)
+								{
+									//need to condition on boundaries
+									pp.SetSpeed(tv, -30);
+								}
+								else if(distance_left < 48.0)
+								{
+									//need to condition on boundaries
+									pp.SetSpeed(tv, 30);
+								}
+							}						
+							
+							if(distance_center < 18.0)
+							{
+								pp.SetSpeed(-40,0);
+								sleep(1);
+							}
 
 							if(distance_center < 12.0 /*|| distance_right < 18.0 || distance_left < 18.0*/)
 							{
