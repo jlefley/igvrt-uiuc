@@ -14,6 +14,8 @@ using namespace std;
 
 double headingError(double, double);
 double constrain(double, double, double);
+double getHeading(double, double, double, double);
+double getDistance(double, double, double, double);
 
 int sign(double val)
 {
@@ -42,21 +44,21 @@ try {
 	int exit = 0;
 	bool flash = 0;
 	int counter, way_target, way_counter, way_start;
-	double tol = 0.000005;
+	double tol = 0.000008;
 	ofstream writefile;
 	ifstream readfile;
 	string line;
 
-	double tv, rv, set, meas, latitude, longitude, meas_latitude, meas_longitude, target, target_heading;
+	double tv, rv, set, meas, latitude, longitude, meas_latitude, meas_longitude, target_heading;
 	double error = 0;
 	double prev_error = 0;
 	double integrated_error = 0;
 	double derivative_error = 0;
 	double way_long, way_lat;
 	int way_count = 0;
-	double A = 0.5; // p
+	double A = 0.4; // p
 	double B = 0.02; // d
-	double C = .000012; // i
+	double C = 0.000012; // i
 	const double GUARD_GAIN = 1e5; //i control constraint
 	double distance_center = 0.0; //distance from robot to object
 	double distance_right = 0.0;
@@ -105,6 +107,7 @@ try {
 				cout << "f  ---  Toggle light flashing\n";
 				cout << "p  ---  Print status\n";
 				cout << "w  ---  Mark waypoints and/or navigate to them\n";
+				cout << "n  ---  Monitor sonar\n";
 				cout << "q  ---  Quit\n";
 				break;
 			case 'm':
@@ -144,17 +147,20 @@ try {
 					//cout << "rv: " << rv << endl;
 
 					//pp.SetSpeed(30,0);
-					if(distance_center < 48.0 && distance_right > 80.0)
-					{
-						rv = 50;
-					}
-					else if(distance_center < 48.0 && distance_left > 80.0)
-					{
-						rv = -50;
-					}
+							if(distance_center < 36.0)
+							{
+								pp.SetSpeed(5,50);
+								sleep(0.75);
+								pp.SetSpeed(20,0);
+							}						
+							
+							if(distance_center < 18.0)
+							{
+								pp.SetSpeed(-20,-50);
+								sleep(1);
+							}
 
-
-					if(distance_center < 18.0 /*|| distance_right < 18.0 || distance_left < 18.0*/)
+					if(distance_center < 12.0 /*|| distance_right < 18.0 || distance_left < 18.0*/)
 					{
 						pp.SetSpeed(0,0);
 					}
@@ -324,11 +330,8 @@ try {
 					cout << tol << endl;
 					while((abs(meas_longitude - way_long) > tol) || (abs(meas_latitude - way_lat) > tol))
 					{
-						error = (180/M_PI)*(atan2(sin((M_PI/180)*(way_long-meas_longitude))*cos((M_PI/180)*way_lat), cos((M_PI/180)*meas_latitude)*sin((M_PI/180)*way_lat)-sin((M_PI/180)*meas_latitude)*cos((M_PI/180)*way_lat)*cos((M_PI/180)*(way_long-meas_longitude))));
-
-						//cout << "heading : " << fmod(error+360.0, 360.0) << endl;
-						//cout << "actual_heading: " << meas << endl;
-						error = headingError(fmod(error + 360.0, 360.0),meas);
+						target_heading = getHeading(meas_longitude, meas_latitude, way_long, way_lat);
+						error = headingError(target_heading,meas);
 						integrated_error += error;
 						cout << "Integrated error: " << integrated_error << endl;
 						derivative_error = error - prev_error;
@@ -408,17 +411,23 @@ try {
 						//cout << "Latitude Error: " << abs(meas_latitude - way_lat) << endl;
 						//cout << tol << endl;
 						cout << "Approaching Waypoint " << way_counter << endl;
-						//target = (180/M_PI)*(atan2(sin((M_PI/180)*(way_long-meas_longitude))*cos((M_PI/180)*way_lat), cos((M_PI/180)*meas_latitude)*sin((M_PI/180)*way_lat)-sin((M_PI/180)*meas_latitude)*cos((M_PI/180)*way_lat)*cos((M_PI/180)*(way_long-meas_longitude))));
-						//target_heading = fmod(target + 360.0, 360.0);
 						while((abs(meas_longitude - way_long) > tol) || (abs(meas_latitude - way_lat) > tol))
 						{
-							//error = (180/M_PI)*(atan2(sin((M_PI/180)*(way_long-meas_longitude))*cos((M_PI/180)*way_lat), cos((M_PI/180)*meas_latitude)*sin((M_PI/180)*way_lat)-sin((M_PI/180)*meas_latitude)*cos((M_PI/180)*way_lat)*cos((M_PI/180)*(way_long-meas_longitude))));
-
-							target = (180/M_PI)*(atan2(sin((M_PI/180)*(way_long-meas_longitude))*cos((M_PI/180)*way_lat), cos((M_PI/180)*meas_latitude)*sin((M_PI/180)*way_lat)-sin((M_PI/180)*meas_latitude)*cos((M_PI/180)*way_lat)*cos((M_PI/180)*(way_long-meas_longitude))));
-						target_heading = fmod(target + 360.0, 360.0);
-
+							/*if(distance_center < 36.0)
+							{
+								pp.SetSpeed(5,50);
+								sleep(2);
+								pp.SetSpeed(20,0);
+							}						
 							
+							if(distance_center < 18.0)
+							{
+								pp.SetSpeed(-20,0);
+								sleep(1);
+							}*/
+							target_heading = getHeading(meas_longitude, meas_latitude, way_long, way_lat);
 							error = headingError(target_heading,meas);
+							cout << getDistance(meas_longitude, meas_latitude, way_long, way_lat) << endl;
 							//cout << "Error: " << error << endl;
 							integrated_error += error;
 							//cout << "Integrated error: " << integrated_error << endl;
@@ -426,27 +435,28 @@ try {
 							//cout << "Differentiated error: " << derivative_error << endl;
 							rv = A*error + B*derivative_error + C*constrain(integrated_error, -GUARD_GAIN, GUARD_GAIN);
 
-							if(distance_center < 18.0 /*|| distance_right < 18.0 || distance_left < 18.0*/)
+							if(distance_center < 12.0 /*|| distance_right < 18.0 || distance_left < 18.0*/)
 							{
 								pp.SetSpeed(0,0);
 							}
 							else
 							{
-								if(rv > 50)
+								if(rv > 2*tv)
 								{
-								pp.SetSpeed(5, rv);
+								pp.SetSpeed(tv/2, rv);
 								}
 								else
 								{
-									if(rv < -50)
+									if(rv < -2*tv)
 									{
-									pp.SetSpeed(5,rv);
+									pp.SetSpeed(tv/2,rv);
 									}
 									else
 									{
 									pp.SetSpeed(tv,rv);
 									}
 								}
+								//pp.SetSpeed(tv,rv);
 							}
 				
 							robot.Read();
@@ -486,6 +496,14 @@ try {
 					cout << "erasing" << endl;
 					writefile.close();
 					break;				
+				}
+			case 'n':
+				while(1)
+				{
+					robot.Read();
+					cout << "Center: " << test[0] << endl;
+					cout << "Left: " << test[1] << endl;
+					cout << "Right: " << test[2] << endl;
 				}
 			case 'q':
 				cout << "Exit\n";
@@ -550,4 +568,21 @@ double constrain(double value, double min, double max)
 	}
 } 
 
+double getHeading(double cur_lng, double cur_lat, double target_lng, double target_lat)
+{
+
+	double target, target_heading;
+
+	target = (180/M_PI)*(atan2(sin((M_PI/180)*(target_lng-cur_lng))*cos((M_PI/180)*target_lat), cos((M_PI/180)*cur_lat)*sin((M_PI/180)*target_lat)-sin((M_PI/180)*cur_lat)*cos((M_PI/180)*target_lat)*cos((M_PI/180)*(target_lng-cur_lng))));
+
+	target_heading = fmod(target + 360.0, 360.0);
+
+	return target_heading;
+}
+
+double getDistance(double cur_lng, double cur_lat, double target_lng, double target_lat)
+{
+	return 6366692.07 * acos(sin((M_PI/180)*cur_lat) * sin((M_PI/180)*target_lat) + cos((M_PI/180)*cur_lat) * cos((M_PI/180)*target_lat) * cos((M_PI/180)*(cur_lng - target_lng)));
+
+}
 

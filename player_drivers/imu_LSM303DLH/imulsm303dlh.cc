@@ -47,7 +47,10 @@ private:
 	player_devaddr_t sonar_addr; //address of sonar interface
 	player_devaddr_t dio_addr; //address of digital i/o interface
 	imulsm303dlhSerial s; // low level serial interface to imu/sonar data
-	double headings[3];
+	//double headings[3];
+	double right[2];
+	double left[2];
+	double center[2];
 };
 
 // A factory creation function, declared outside of the class so that it
@@ -127,9 +130,18 @@ int IMULSM303DLHDriver::MainSetup()
     
 	PLAYER_MSG0(0, "IMU LSM303DLH/Sonar driver ready.");
 
-	headings[0] = -1.0;
-	headings[1] = -1.0;
-	headings[2] = -1.0;
+	//headings[0] = -1.0;
+	//headings[1] = -1.0;
+	//headings[2] = -1.0;
+
+	left[0] = -1.0;
+	left[1] = -1.0;
+
+	right[0] = -1.0;
+	right[1] = -1.0;
+
+	center[0] = -1.0;
+	center[1] = -1.0;
 
 	return 0;
 }
@@ -220,6 +232,7 @@ void IMULSM303DLHDriver::publishIMUSonarData()
 		imudata.pose.pyaw = (this->s.getHeading() - 90);
 	}
 
+	/*
 	if(headings[0] == -1.0 && headings[1] == -1.0 && headings[2] == -1.0)
 	{
 	headings[0] = imudata.pose.pyaw;
@@ -232,8 +245,9 @@ void IMULSM303DLHDriver::publishIMUSonarData()
 	headings[1] = headings[0];
 	headings[0] = imudata.pose.pyaw;
 	}
+	*/
 
-	imudata.pose.pyaw = (headings[0] + headings[1] + headings[2]) / 3.0;
+	//imudata.pose.pyaw = (headings[0] + headings[1] + headings[2]) / 3.0;
 
 	//imudata.pose.pyaw = this->s.getHeading();
 	
@@ -249,6 +263,49 @@ void IMULSM303DLHDriver::publishIMUSonarData()
 	sonararr[0] = float(this->s.getCenterDistance());
 	sonararr[1] = float(this->s.getLeftDistance());
 	sonararr[2] = float(this->s.getRightDistance());
+
+
+	if(center[0] == -1.0 && center[1] == -1.0)
+	{
+	center[0] = sonararr[0];
+	center[1] = sonararr[0];
+	}
+	else
+	{
+	center[1] = center[0];
+	center[0] = sonararr[0];
+	}
+
+	sonararr[0] = (center[0] + center[1]) / 2.0;
+
+
+	if(left[0] == -1.0 && left[1] == -1.0)
+	{
+	left[0] = sonararr[1];
+	left[1] = sonararr[1];
+	}
+	else
+	{
+	left[1] = left[0];
+	left[0] = sonararr[1];
+	}
+
+	sonararr[1] = (left[0] + left[1]) / 2.0;
+
+
+	if(right[0] == -1.0 && right[1] == -1.0)
+	{
+	right[0] = sonararr[2];
+	right[1] = sonararr[2];
+	}
+	else
+	{
+	right[1] = right[0];
+	right[0] = sonararr[2];
+	}
+
+	sonararr[2] = (right[0] + right[1]) / 2.0;
+
 
 	sonardata.ranges_count = 3;
 	sonardata.ranges = sonararr;

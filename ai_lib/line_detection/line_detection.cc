@@ -53,9 +53,9 @@ int main(int argc, char *argv[])
  
 	int counter = 0;
 
-	VideoCapture cap1(1);
-	VideoCapture cap2(2);
-	VideoCapture cap3(3);
+	VideoCapture cap1(1); //1
+	VideoCapture cap2(2); //2
+	VideoCapture cap3(3); //3
 
 	if(!cap1.isOpened() || !cap2.isOpened() || !cap3.isOpened())
 		return -1;
@@ -173,9 +173,11 @@ int main(int argc, char *argv[])
 		drawContours(lines_left, countours_left, -1, CV_RGB(56, 17, 125), 10, 8);
 		drawContours(lines_right, countours_right, -1, CV_RGB(56, 17, 125), 10, 8);
 
+		sort_left.clear();
+		sort_right.clear();
+
 		for(counter = 0; counter < countours_left.size(); counter++)
 		{
-			cout << abs(contourArea(countours_left[counter])) << endl;
 			line1[0] = 0.0;
 			line1[1] = 0.0;
 			line1[2] = 0.0;
@@ -193,7 +195,7 @@ int main(int argc, char *argv[])
 				{
 					break;
 				}
-				it++;
+				it3++;
 			}
 			sort_left.insert(it3, pt1);
 			/*pt2.x = line1[2] + line1[0]*500;
@@ -203,7 +205,6 @@ int main(int argc, char *argv[])
 
 		for(counter = 0; counter < countours_right.size(); counter++)
 		{
-			cout << abs(contourArea(countours_right[counter])) << endl;
 			line1[0] = 0.0;
 			line1[1] = 0.0;
 			line1[2] = 0.0;
@@ -221,7 +222,7 @@ int main(int argc, char *argv[])
 				{
 					break;
 				}
-				it++;
+				it3++;
 			}
 			sort_right.insert(it3, pt1);
 			/*pt2.x = line1[2] + line1[0]*500;
@@ -229,13 +230,23 @@ int main(int argc, char *argv[])
 			line(right1, pt1, pt2, CV_RGB(124, 14, 65), 5, CV_AA, 0);*/
 		}
 
-		for(counter = 0; counter < sort_left.size() - 1; counter++)
+		for(counter = 0; counter < sort_left.size(); counter++)
 		{
+			cout << "Left " << counter << ": ("<< sort_left[counter].x << " ," << sort_left[counter].y << ")" << endl;
+			if(counter == sort_left.size() - 1)
+			{
+				break;
+			}
 			line(left1, sort_left[counter], sort_left[counter + 1], CV_RGB(124, 14, 65), 5, CV_AA, 0);
 		}
 
-		for(counter = 0; counter < sort_right.size() - 1; counter++)
-		{
+		for(counter = 0; counter < sort_right.size(); counter++)
+		{			
+			cout << "Right " << counter << ": ("<< sort_right[counter].x << " ," << sort_right[counter].y << ")" << endl;
+			if(counter == sort_right.size() - 1)
+			{
+				break;
+			}
 			line(right1, sort_right[counter], sort_right[counter + 1], CV_RGB(124, 14, 65), 5, CV_AA, 0);
 		}
 
@@ -243,6 +254,8 @@ int main(int argc, char *argv[])
 		imshow("Right", rightim);
 		imshow("Composite Left" , lines_left);
 		imshow("Composite Right" , lines_right);
+
+		cout << sort_left.size() << " " << sort_right.size() << endl;
 		imshow("Lines Left" , left1);
 		imshow("Lines Right" , right1);
 
@@ -263,7 +276,7 @@ int main(int argc, char *argv[])
 
 
 			trans_left = getPerspectiveTransform(src_left,dst_left);
-			warpPerspective(left1,frame_trans_left,trans_left,left1.size());
+			warpPerspective(lines_left,frame_trans_left,trans_left,lines_left.size());
 			imshow("Calibrate Left",frame_trans_left);
 		}
 		else
@@ -289,7 +302,7 @@ int main(int argc, char *argv[])
 
 
 			trans_right = getPerspectiveTransform(src_right,dst_right);
-			warpPerspective(right1,frame_trans_right,trans_right,right1.size());
+			warpPerspective(lines_right,frame_trans_right,trans_right,lines_right.size());
 			imshow("Calibrate Right",frame_trans_right);
 		}
 		else

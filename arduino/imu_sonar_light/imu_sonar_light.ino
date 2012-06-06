@@ -96,9 +96,12 @@ void loop() {
   int heading = compass.heading((LSM303::vector){0,-1,0});
   
   int sonarValueCenter = readSonar(CENTER_SONAR_RX,CENTER_SONAR_ANALOG,60);
-  int sonarValueLeft = readSonar(LEFT_SONAR_RX,LEFT_SONAR_ANALOG,60);
+  delay(75);
   int sonarValueRight = readSonar(RIGHT_SONAR_RX,RIGHT_SONAR_ANALOG,60);
-
+  delay(75);
+  int sonarValueLeft = readSonar(LEFT_SONAR_RX,LEFT_SONAR_ANALOG,60);
+  delay(75);
+    
   Serial.print("$");
   Serial.print((int)compass.a.x,DEC);
   Serial.print(",");
