@@ -58,8 +58,8 @@ int main(int argc, char *argv[])
 	namedWindow("Right",1);
 	namedWindow("Composite Left",1);
 	namedWindow("Composite Right",1);
-	//namedWindow("Lines Left",1);
 	//namedWindow("Lines Right",1);
+	//namedWindow("Lines Left",1);
 	namedWindow("Calibrate Left", 1);
 	namedWindow("Calibrate Right", 1);
 	//namedWindow("Cont_Left", 1);
@@ -67,7 +67,6 @@ int main(int argc, char *argv[])
 
 	int counter = 0;
 	int counter2 = 0;
-
 	int dist_left = 0;
 	int dist_right = 0;
 
