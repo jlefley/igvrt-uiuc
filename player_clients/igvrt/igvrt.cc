@@ -16,25 +16,7 @@ double headingError(double, double);
 double constrain(double, double, double);
 double getHeading(double, double, double, double);
 double getDistance(double, double, double, double);
-
-int sign(double val)
-{
-	if(val > 0.0)
-	{
-		return 1;
-	}
-	else
-	{
-		if(val < 0.0)
-		{
-			return -1;
-		}
-		else
-		{
-			return 0;
-		}
-	}
-}
+int sign(double val);
 
 int main(int argc, char *argv[])
 {
@@ -423,48 +405,62 @@ try {
 							//cout << "Differentiated error: " << derivative_error << endl;
 							rv = A*error + B*derivative_error + C*constrain(integrated_error, -GUARD_GAIN, GUARD_GAIN);
 							
-							if(distance_center < 48.0)
-							{
-								if(distance_right < 48.0)
-								{
-									//need to condition on boundaries
-									pp.SetSpeed(tv, -30);
-								}
-								else if(distance_left < 48.0)
-								{
-									//need to condition on boundaries
-									pp.SetSpeed(tv, 30);
-								}
-							}						
-							
-							if(distance_center < 18.0)
-							{
-								pp.SetSpeed(-40,0);
-								sleep(1);
-							}
-
-							if(distance_center < 12.0 /*|| distance_right < 18.0 || distance_left < 18.0*/)
+							if(distance_center <= 15.0 || distance_right < 18.0 || distance_left < 18.0)
 							{
 								pp.SetSpeed(0,0);
 							}
 							else
 							{
-								if(rv > 2*tv)
+								/*if(rv > 2*tv)
 								{
-								pp.SetSpeed(tv/2, rv);
+									pp.SetSpeed(tv/2, rv);
 								}
 								else
 								{
 									if(rv < -2*tv)
 									{
-									pp.SetSpeed(tv/2,rv);
+										pp.SetSpeed(tv/2,rv);
 									}
 									else
 									{
-									pp.SetSpeed(tv,rv);
+										pp.SetSpeed(tv,rv);
+									}
+								}*/
+
+								if(rv > 30 && getDistance(meas_longitude, meas_latitude, way_long, way_lat) < 2.0)
+								{
+									pp.SetSpeed(5, rv);
+								}
+								else
+								{
+									if(rv < -30 && getDistance(meas_longitude, meas_latitude, way_long, way_lat) < 2.0)
+									{
+										pp.SetSpeed(5, rv);
+									}
+									else
+									{
+										pp.SetSpeed(tv, rv);
 									}
 								}
-								//pp.SetSpeed(tv,rv);
+								if(distance_center < 60.0)
+								{
+									if(distance_right < 60.0)
+									{
+										//need to condition on boundaries
+										pp.SetSpeed(tv, -80);
+									}
+									else if(distance_left < 60.0)
+									{
+										//need to condition on boundaries
+										pp.SetSpeed(tv, 80);
+									}
+								}						
+							
+								if(distance_center < 18.0)
+								{
+									pp.SetSpeed(-40,0);
+									sleep(1);
+								}
 							}
 				
 							robot.Read();
@@ -594,3 +590,21 @@ double getDistance(double cur_lng, double cur_lat, double target_lng, double tar
 
 }
 
+int sign(double val)
+{
+	if(val > 0.0)
+	{
+		return 1;
+	}
+	else
+	{
+		if(val < 0.0)
+		{
+			return -1;
+		}
+		else
+		{
+			return 0;
+		}
+	}
+}
