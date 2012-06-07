@@ -38,11 +38,11 @@ bool imulsm303dlhSerial::flashLight(int flash)
 
 	if(flash == 1)
 	{
-		msg[0] = '1';
+		msg[0] = 'a';
 	}
 	else
 	{
-		msg[0] = '0';
+		msg[0] = 's';
 	}
 
 	if(!sendBytes(msg))

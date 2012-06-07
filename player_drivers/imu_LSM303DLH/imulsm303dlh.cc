@@ -178,8 +178,10 @@ int IMULSM303DLHDriver::ProcessMessage(QueuePointer & resp_queue, player_msghdr 
 
 		// cast data to correct type
 		player_dio_cmd_t* d = (player_dio_cmd_t*)data;
+		
+		d->count = 1;
 
-		// set speeds
+		// set light
 		if(s.flashLight(d->digout) == false)
 		{
 			PLAYER_ERROR("LIGHT FAILURE.");
