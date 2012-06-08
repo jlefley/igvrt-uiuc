@@ -92,6 +92,7 @@ try {
 	double tv, rv, set, meas, latitude, longitude, meas_latitude, meas_longitude, target_heading;
 	double error = 0;
 	double prev_error = 0;
+	double line_error = 0;
 	double integrated_error = 0;
 	double derivative_error = 0;
 	double way_long, way_lat;
@@ -103,6 +104,10 @@ try {
 	double distance_center = 0.0; //distance from robot to object
 	double distance_right = 0.0;
 	double distance_left = 0.0;
+
+	bool obstacle-left = false;
+	bool obstacle-right = false;
+	bool obstacle-center = false;
 	
 	if (argc != 2)
 	{
@@ -337,6 +342,42 @@ try {
 						cout << "Approaching Waypoint " << way_counter << endl;
 						while((abs(meas_longitude - way_long) > tol) || (abs(meas_latitude - way_lat) > tol))
 						{
+							robot.Read();
+							distance_center=test[0];
+							distance_left=test[1];
+							distance_right=test[2];
+							meas = ii.GetPose().pyaw;
+							meas_longitude = gp.GetLongitude();
+							meas_latitude = gp.GetLatitude();
+
+							if(distance_center < 60)
+							{
+								obstacle_center = true;
+							}
+							else
+							{
+								obstacle_center = false;
+							}
+
+							if(distance_left < 60)
+							{
+								obstacle_left = true;
+							}
+							else
+							{
+								obstacle_left = false;
+							}
+
+
+							if(distance_right < 60)
+							{
+								obstacle_right = true;
+							}
+							else
+							{
+								obstacle_right = false;
+							}
+
 							cout << real_dist_left << " " << real_dist_right << endl;
 							target_heading = getHeading(meas_longitude, meas_latitude, way_long, way_lat);
 							error = headingError(target_heading,meas);
@@ -347,6 +388,7 @@ try {
 							derivative_error = error - prev_error;
 							//cout << "Differentiated error: " << derivative_error << endl;
 							rv = A*error + B*derivative_error + C*constrain(integrated_error, -GUARD_GAIN, GUARD_GAIN);
+							line_error = real_dist_right - real_dist_left;
 							
 							if(distance_center <= 15.0 || distance_right < 18.0 || distance_left < 18.0)
 							{
@@ -354,22 +396,8 @@ try {
 							}
 							else
 							{
-								/*if(rv > 2*tv)
-								{
-									pp.SetSpeed(tv/2, rv);
-								}
-								else
-								{
-									if(rv < -2*tv)
-									{
-										pp.SetSpeed(tv/2,rv);
-									}
-									else
-									{
-										pp.SetSpeed(tv,rv);
-									}
-								}*/
-
+								///WAYPOINT NAVIGATION: LOWEST IMPORTANCE IN HEIRARCHICAL CONTROL STRUCTURE 
+								///(SEE CASE "NO OBSTACLES, DO NOTHING UNLESS YOU SEE LINES" BELOW)
 								if(rv > 30 && getDistance(meas_longitude, meas_latitude, way_long, way_lat) < 2.0)
 								{
 									pp.SetSpeed(5, rv);
@@ -385,40 +413,150 @@ try {
 										pp.SetSpeed(tv, rv);
 									}
 								}
-								if(distance_center < 60.0)
+								//OBSTACLE AVOIDANCE AND LANE FOLLOWING: EQUAL (GREATER THAN WAYPOINTS) IMPORTANCE
+								//IN CONTROL STRUCTURE
+
+								if(obstacle_center)
 								{
-									if(distance_right < 60.0)
+									if(obstacle_right)
 									{
-										//need to condition on boundaries
-										pp.SetSpeed(tv, -80);
+										if(obstacle_left)
+										{
+											//OBSTACLES LEFT, RIGHT, CENTER
+											if(line_error > 0.0)
+											{			
+												//CLOSER TO THE LEFT
+											}
+											else
+											{
+												//CLOSER TO THE RIGHT
+											}
+										}
+										else
+										{
+											//OBSTACLES RIGHT, CENTER
+											if(line_error > 0.0)
+											{			
+												//CLOSER TO THE LEFT
+											}
+											else
+											{
+												//CLOSER TO THE RIGHT
+											}
+										}
 									}
-									else if(distance_left < 60.0)
+									else
 									{
-										//need to condition on boundaries
-										pp.SetSpeed(tv, 80);
+										if(obstacle_left)
+										{
+											//OBSTACLES LEFT, CENTER
+											if(line_error > 0.0)
+											{			
+												//CLOSER TO THE LEFT
+											}
+											else
+											{
+												//CLOSER TO THE RIGHT
+											}
+										}
+										else
+										{
+											//OBSTACLES CENTER
+											if(line_error > 0.0)
+											{			
+												//CLOSER TO THE LEFT
+											}
+											else
+											{
+												//CLOSER TO THE RIGHT
+											}
+										}
 									}
-								}						
-							
+								}
+								else
+								{
+									if(obstacle_right)
+									{
+										if(obstacle_left)
+										{
+											//OBSTACLES LEFT, RIGHT
+											if(line_error > 0.0)
+											{			
+												//CLOSER TO THE LEFT
+											}
+											else
+											{
+												//CLOSER TO THE RIGHT
+											}
+										}
+										else
+										{
+											//OBSTACLES RIGHT
+											if(line_error > 0.0)
+											{			
+												//CLOSER TO THE LEFT
+											}
+											else
+											{
+												//CLOSER TO THE RIGHT
+											}
+										}
+									}
+									else
+									{
+										if(obstacle_left)
+										{
+											//OBSTACLES LEFT
+											if(line_error > 0.0)
+											{			
+												//CLOSER TO THE LEFT
+											}
+											else
+											{
+												//CLOSER TO THE RIGHT
+											}
+										}
+										else
+										{
+											//NO OBSTACLES, DO NOTHING UNLESS YOU SEE LINES
+											if(real_dist_right > 7.0 && real_dist_left > 7.0)
+											{						
+												//DO NOTHING, SEE ABOVE
+											}
+											else
+											{
+												//AVOID LINES
+												pp.SetSpeed(tv, 10*line_error);
+
+											}
+										}
+									}
+								}
+
+								//NEED TO CONDITION ON GETTING TOO CLOSE TO AN OBSTACLE
 								if(distance_center < 18.0)
 								{
 									pp.SetSpeed(-40,0);
-									sleep(1);
+									sleep(2);
+								}
+								if(distance_center < 18.0)
+								{
+									pp.SetSpeed(-40,0);
+									sleep(2);
+								}
+								if(distance_center < 18.0)
+								{
+									pp.SetSpeed(-40,0);
+									sleep(2);
 								}
 							}
-				
-							robot.Read();
+
 							if(ep.GetInput(0) == 1)
 							{
 								cout << "E-Stop Condition" << endl;
 								pp.SetSpeed(0,0);
 								break;
 							}
-							distance_center=test[0];
-							distance_left=test[1];
-							distance_right=test[2];
-							meas = ii.GetPose().pyaw;
-							meas_longitude = gp.GetLongitude();
-							meas_latitude = gp.GetLatitude();
 							//cout << "Longitude Error: " << abs(meas_longitude - way_long) << endl;
 							//cout << "Latitude Error: " << abs(meas_latitude - way_lat) << endl;
 						}
@@ -461,17 +599,17 @@ try {
 				while(1)
 				{
 					robot.Read();
-					error = real_dist_right - real_dist_left;
+					line_error = real_dist_right - real_dist_left;
 					if(real_dist_right > 7.0 && real_dist_left > 7.0)
 					{						
 						pp.SetSpeed(tv,0);
 					}
 					else
 					{
-						pp.SetSpeed(tv, 10*error);
+						pp.SetSpeed(tv, 10*line_error);
 
 					}
-					cout << error << endl;
+					cout << line_error << endl;
 					
 
 					if(ep.GetInput(0) == 1)
