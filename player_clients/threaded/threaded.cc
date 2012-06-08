@@ -426,10 +426,12 @@ try {
 											if(line_error > 0.0)
 											{			
 												//CLOSER TO THE LEFT
+												pp.SetSpeed(5, 50);
 											}
 											else
 											{
 												//CLOSER TO THE RIGHT
+												pp.SetSpeed(5, -50);
 											}
 										}
 										else
@@ -438,10 +440,12 @@ try {
 											if(line_error > 0.0)
 											{			
 												//CLOSER TO THE LEFT
+												pp.SetSpeed(5,-30);
 											}
 											else
 											{
 												//CLOSER TO THE RIGHT
+												pp.SetSpeed(5,-50);
 											}
 										}
 									}
@@ -453,10 +457,12 @@ try {
 											if(line_error > 0.0)
 											{			
 												//CLOSER TO THE LEFT
+												pp.SetSpeed(5,50);
 											}
 											else
 											{
 												//CLOSER TO THE RIGHT
+												pp.SetSpeed(5,30);
 											}
 										}
 										else
@@ -465,10 +471,12 @@ try {
 											if(line_error > 0.0)
 											{			
 												//CLOSER TO THE LEFT
+												pp.SetSpeed(5, 50);
 											}
 											else
 											{
 												//CLOSER TO THE RIGHT
+												pp.SetSpeed(5, -50);
 											}
 										}
 									}
@@ -483,10 +491,12 @@ try {
 											if(line_error > 0.0)
 											{			
 												//CLOSER TO THE LEFT
+												pp.SetSpeed(20, 10);
 											}
 											else
 											{
 												//CLOSER TO THE RIGHT
+												pp.SetSpeed(20, 10);
 											}
 										}
 										else
@@ -495,10 +505,12 @@ try {
 											if(line_error > 0.0)
 											{			
 												//CLOSER TO THE LEFT
+												pp.SetSpeed(5,80);
 											}
 											else
 											{
 												//CLOSER TO THE RIGHT
+												pp.SetSpeed(5,-50);
 											}
 										}
 									}
@@ -510,10 +522,12 @@ try {
 											if(line_error > 0.0)
 											{			
 												//CLOSER TO THE LEFT
+												pp.SetSpeed(5, 50);
 											}
 											else
 											{
 												//CLOSER TO THE RIGHT
+												pp.SetSpeed(5, -80);
 											}
 										}
 										else
@@ -522,6 +536,21 @@ try {
 											if(real_dist_right > 7.0 && real_dist_left > 7.0)
 											{						
 												//DO NOTHING, SEE ABOVE
+												if(rv > 30 && getDistance(meas_longitude, meas_latitude, way_long, way_lat) < 2.0)
+												{
+													pp.SetSpeed(5, rv);
+												}
+												else
+												{
+													if(rv < -30 && getDistance(meas_longitude, meas_latitude, way_long, way_lat) < 2.0)
+													{
+														pp.SetSpeed(5, rv);
+													}
+													else
+													{
+														pp.SetSpeed(tv, rv);
+													}
+												}
 											}
 											else
 											{
@@ -534,6 +563,7 @@ try {
 								}
 
 								//NEED TO CONDITION ON GETTING TOO CLOSE TO AN OBSTACLE
+								/*								
 								if(distance_center < 18.0)
 								{
 									pp.SetSpeed(-40,0);
@@ -549,6 +579,7 @@ try {
 									pp.SetSpeed(-40,0);
 									sleep(2);
 								}
+								*/
 							}
 
 							if(ep.GetInput(0) == 1)
