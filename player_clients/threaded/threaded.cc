@@ -67,8 +67,6 @@ double cal_dist = 2.0;
 
 double real_dist_left, real_dist_right;
 
-void my_mouse_callback_left(int event, int x, int y, int flags, void* param);
-void my_mouse_callback_right(int event, int x, int y, int flags, void* param);
 double df(int x1, int y1, int x2, int y2);
 ///////////////////////////////////////////
 
@@ -669,6 +667,9 @@ try {
 
 int ImageProcess()
 {
+	ifstream readfile2;
+	string line2;
+
 	namedWindow("Left",1);
 	namedWindow("Right",1);
 	namedWindow("Composite Left",1);
@@ -681,22 +682,69 @@ int ImageProcess()
 	int dist_left = 0;
 	int dist_right = 0;
 
+	readfile2.open("cal_data.txt")
+
+	readfile2 >> setprecision(15) >> src_left[0].x;
+	readfile2 >> setprecision(15) >> src_left[0].y;
+	readfile2 >> setprecision(15) >> src_left[1].x;
+	readfile2 >> setprecision(15) >> src_left[1].y;
+	readfile2 >> setprecision(15) >> src_left[2].x;
+	readfile2 >> setprecision(15) >> src_left[2].y;
+	readfile2 >> setprecision(15) >> src_left[3].x;
+	readfile2 >> setprecision(15) >> src_left[3].y;	
+
+	readfile2 >> setprecision(15) >> src_right[0].x;
+	readfile2 >> setprecision(15) >> src_right[0].y;
+	readfile2 >> setprecision(15) >> src_right[1].x;
+	readfile2 >> setprecision(15) >> src_right[1].y;
+	readfile2 >> setprecision(15) >> src_right[2].x;
+	readfile2 >> setprecision(15) >> src_right[2].y;
+	readfile2 >> setprecision(15) >> src_right[3].x;
+	readfile2 >> setprecision(15) >> src_right[3].y;
+
+	readfile2.close();
+
 	VideoCapture cap2(2); //2
 	VideoCapture cap3(3); //3
 
 	if(!cap2.isOpened() || !cap3.isOpened())
 		return -1;
 
-	createTrackbar("CAL_SCALE", "Calibrate Left", &x_left, 1000, 0, NULL);
-	cvSetMouseCallback("Calibrate Left", my_mouse_callback_left, NULL);
-
-	createTrackbar("CAL_SCALE", "Calibrate Right", &x_right, 1000, 0, NULL);
-	cvSetMouseCallback("Calibrate Right", my_mouse_callback_right, NULL);
-
 	createTrackbar("THRESH_VALUE", "Calibrate Left", &thresh2, 255, 0, NULL);
 	createTrackbar("CUTOFF_VALUE", "Calibrate Left", &cutoff, 10000, 0, NULL);
 	createTrackbar("THRESH_VALUE", "Calibrate Right", &thresh, 255, 0, NULL);
 	createTrackbar("CUTOFF_VALUE", "Calibrate Right", &cutoff, 10000, 0, NULL);
+
+	//scales with the center of selection as scaling center
+	dst_left[0].x = (-1)*x_left+320;    //3*x
+	dst_left[0].y = (1)*x_left+240;
+	dst_left[1].x = (-1)*x_left+320;    //3*x
+	dst_left[1].y = (-1)*x_left+240;
+	dst_left[2].x = (1)*x_left+320;
+	dst_left[2].y = (-1)*x_left+240;
+	dst_left[3].x = (1)*x_left+320;
+	dst_left[3].y = (1)*x_left+240;
+	cal_dist_left = (df(src_left[0].x, src_left[0].y, src_left[1].x, src_left[1].y) +
+		     df(src_left[1].x, src_left[1].y, src_left[2].x, src_left[2].y) +
+		     df(src_left[2].x, src_left[2].y, src_left[3].x, src_left[3].y) +
+		     df(src_left[3].x, src_left[3].y, src_left[0].x, src_left[0].y))*0.25;
+	cal_dist_left = cal_dist / cal_dist_left;	
+	trans_left = getPerspectiveTransform(src_left,dst_left);				
+	//scales with the center of selection as scaling center
+	dst_right[0].x = (-1)*x_right+320;    //3*x
+	dst_right[0].y = (1)*x_right+240;
+	dst_right[1].x = (-1)*x_right+320;    //3*x
+	dst_right[1].y = (-1)*x_right+240;
+	dst_right[2].x = (1)*x_right+320;
+	dst_right[2].y = (-1)*x_right+240;
+	dst_right[3].x = (1)*x_right+320;
+	dst_right[3].y = (1)*x_right+240;
+	cal_dist_right = (df(src_right[0].x, src_right[0].y, src_right[1].x, src_right[1].y) +
+		     df(src_right[1].x, src_right[1].y, src_right[2].x, src_right[2].y) +
+		     df(src_right[2].x, src_right[2].y, src_right[3].x, src_right[3].y) +
+		     df(src_right[3].x, src_right[3].y, src_right[0].x, src_right[0].y))*0.25;
+	cal_dist_right = cal_dist / cal_dist_right;
+	trans_right = getPerspectiveTransform(src_right,dst_right);
 
 	while(true)
 	{
@@ -804,142 +852,41 @@ int ImageProcess()
 		imshow("Composite Left" , cont_left);
 		imshow("Composite Right" , cont_right);
 
-		if(pt_ind_left >= 4)
+		warpPerspective(cont_left,frame_trans_left,trans_left,cont_left.size());
+		imshow("Calibrate Left",frame_trans_left);
+		dist_left = 639;
+		for(counter = 0; counter < frame_trans_left.rows; counter++)
 		{
-			if(flag_left == 0)
+			for(counter2 = 0; counter2 < frame_trans_left.cols; counter2++)
 			{
-				//scales with the center of selection as scaling center
-				dst_left[0].x = (-1)*x_left+320;    //3*x
-				dst_left[0].y = (1)*x_left+240;
-
-				dst_left[1].x = (-1)*x_left+320;    //3*x
-				dst_left[1].y = (-1)*x_left+240;
-	
-				dst_left[2].x = (1)*x_left+320;
-				dst_left[2].y = (-1)*x_left+240;
-
-				dst_left[3].x = (1)*x_left+320;
-				dst_left[3].y = (1)*x_left+240;
-
-				cal_dist_left = (df(src_left[0].x, src_left[0].y, src_left[1].x, src_left[1].y) +
-					     df(src_left[1].x, src_left[1].y, src_left[2].x, src_left[2].y) +
-					     df(src_left[2].x, src_left[2].y, src_left[3].x, src_left[3].y) +
-					     df(src_left[3].x, src_left[3].y, src_left[0].x, src_left[0].y))*0.25;
-			
-				cal_dist_left = cal_dist / cal_dist_left;	
-			
-				trans_left = getPerspectiveTransform(src_left,dst_left);
-				flag_left = 1;
+				if(frame_trans_left.at<bool>(counter, counter2) == 255 && dist_left > (639 - counter2))
+					{
+					dist_left = 639 - counter2;
+					}
 			}
-
-			warpPerspective(cont_left,frame_trans_left,trans_left,cont_left.size());
-			imshow("Calibrate Left",frame_trans_left);
-			dist_left = 639;
-			for(counter = 0; counter < frame_trans_left.rows; counter++)
-			{
-				for(counter2 = 0; counter2 < frame_trans_left.cols; counter2++)
-				{
-					if(frame_trans_left.at<bool>(counter, counter2) == 255 && dist_left > (639 - counter2))
-						{
-						dist_left = 639 - counter2;
-						}
-				}
-			}
-			real_dist_left = cal_dist_left * dist_left;
 		}
-		else
+		real_dist_left = cal_dist_left * dist_left;
+
+		warpPerspective(cont_right,frame_trans_right,trans_right,cont_right.size());
+		imshow("Calibrate Right",frame_trans_right);
+		dist_right = 639;
+		for(counter = 0; counter < frame_trans_right.rows; counter++)
 		{
-			imshow("Calibrate Left",leftim);
-		}
-
-		
-		if(pt_ind_right >= 4)
-		{
-			if(flag_right == 0)
+			for(counter2 = 0; counter2 < frame_trans_right.cols; counter2++)
 			{
-				//scales with the center of selection as scaling center
-				dst_right[0].x = (-1)*x_right+320;    //3*x
-				dst_right[0].y = (1)*x_right+240;
-
-				dst_right[1].x = (-1)*x_right+320;    //3*x
-				dst_right[1].y = (-1)*x_right+240;
-	
-				dst_right[2].x = (1)*x_right+320;
-				dst_right[2].y = (-1)*x_right+240;
-
-				dst_right[3].x = (1)*x_right+320;
-				dst_right[3].y = (1)*x_right+240;
-			
-				cal_dist_right = (df(src_right[0].x, src_right[0].y, src_right[1].x, src_right[1].y) +
-					     df(src_right[1].x, src_right[1].y, src_right[2].x, src_right[2].y) +
-					     df(src_right[2].x, src_right[2].y, src_right[3].x, src_right[3].y) +
-					     df(src_right[3].x, src_right[3].y, src_right[0].x, src_right[0].y))*0.25;
-			
-				cal_dist_right = cal_dist / cal_dist_right;
-
-				trans_right = getPerspectiveTransform(src_right,dst_right);
-				flag_right = 1;	
+				if(frame_trans_right.at<bool>(counter, counter2) == 255 && dist_right > counter2)
+					{
+					dist_right = counter2;
+					}
 			}
-
-			warpPerspective(cont_right,frame_trans_right,trans_right,cont_right.size());
-			imshow("Calibrate Right",frame_trans_right);
-			dist_right = 639;
-			for(counter = 0; counter < frame_trans_right.rows; counter++)
-			{
-				for(counter2 = 0; counter2 < frame_trans_right.cols; counter2++)
-				{
-					if(frame_trans_right.at<bool>(counter, counter2) == 255 && dist_right > counter2)
-						{
-						dist_right = counter2;
-						}
-				}
-			}
-			real_dist_right = cal_dist_right * dist_right;
 		}
-		else
-		{
-			imshow("Calibrate Right",rightim);
-		}
+		real_dist_right = cal_dist_right * dist_right;
 
 		if(waitKey(30) >= 0)
 			break;
 	}
 
 	return 0;
-}
-
-void my_mouse_callback_left(int event, int x, int y, int flags, void* param)
-{
-	switch(event)
-	{
-		case CV_EVENT_LBUTTONDOWN:
-	
-			if(pt_ind_left < 4)
-			{
-				cout << x << " " << y << endl;
-				src_left[pt_ind_left].x = x;
-				src_left[pt_ind_left].y = y;
-				pt_ind_left++;
-			}
-			break;
-	}
-}
-
-void my_mouse_callback_right(int event, int x, int y, int flags, void* param)
-{
-	switch(event)
-	{
-		case CV_EVENT_LBUTTONDOWN:
-	
-			if(pt_ind_right < 4)
-			{
-				cout << x << " " << y << endl;
-				src_right[pt_ind_right].x = x;
-				src_right[pt_ind_right].y = y;
-				pt_ind_right++;
-			}
-			break;
-	}
 }
 
 double df(int x1, int y1, int x2, int y2)
