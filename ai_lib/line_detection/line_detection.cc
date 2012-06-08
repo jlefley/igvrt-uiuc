@@ -1,6 +1,8 @@
 #include <iostream>
 #include <libplayerc++/playerc++.h>
 #include <math.h>
+#include <fstream>
+#include <iomanip>
 
 //for opencv c
 #include <stdio.h>
@@ -17,7 +19,7 @@ int thresh2 = 125;
 int cutoff = 1000;
 
 
-Mat leftim, rightim, centerim, trans_left, trans_right, frame_trans_left, frame_trans_right;
+Mat leftim, rightim, trans_left, trans_right, frame_trans_left, frame_trans_right;
 vector<Mat> planes_left;
 vector<Mat> planes_right;
 Mat lines_left, left1;
@@ -52,6 +54,8 @@ void my_mouse_callback_left(int event, int x, int y, int flags, void* param);
 void my_mouse_callback_right(int event, int x, int y, int flags, void* param);
 double df(int x1, int y1, int x2, int y2);
 
+ofstream writefile;
+
 int main(int argc, char *argv[])
 {
 	namedWindow("Left",1);
@@ -70,11 +74,10 @@ int main(int argc, char *argv[])
 	int dist_left = 0;
 	int dist_right = 0;
 
-	VideoCapture cap1(1); //1
 	VideoCapture cap2(2); //2
 	VideoCapture cap3(3); //3
 
-	if(!cap1.isOpened() || !cap2.isOpened() || !cap3.isOpened())
+	if(!cap2.isOpened() || !cap3.isOpened())
 		return -1;
 
 	createTrackbar("CAL_SCALE", "Calibrate Left", &x_left, 1000, 0, NULL);
@@ -90,7 +93,6 @@ int main(int argc, char *argv[])
 
 	while(true)
 	{
-		cap1 >> centerim;
 		cap2 >> rightim;
 		cap3 >> leftim;
 
@@ -302,6 +304,17 @@ int main(int argc, char *argv[])
 			
 				trans_left = getPerspectiveTransform(src_left,dst_left);
 				flag_left = 1;
+
+				writefile.open("cal_data.txt", ofstream::app);
+				writefile << src_left[0].x << endl;
+				writefile << src_left[0].y << endl;
+				writefile << src_left[1].x << endl;
+				writefile << src_left[1].y << endl;
+				writefile << src_left[2].x << endl;
+				writefile << src_left[2].y << endl;
+				writefile << src_left[3].x << endl;
+				writefile << src_left[3].y << endl;
+				writefile.close();
 			}
 
 			warpPerspective(cont_left,frame_trans_left,trans_left,cont_left.size());
@@ -352,6 +365,17 @@ int main(int argc, char *argv[])
 
 				trans_right = getPerspectiveTransform(src_right,dst_right);
 				flag_right = 1;	
+
+				writefile.open("cal_data.txt", ofstream::app);
+				writefile << src_right[0].x << endl;
+				writefile << src_right[0].y << endl;
+				writefile << src_right[1].x << endl;
+				writefile << src_right[1].y << endl;
+				writefile << src_right[2].x << endl;
+				writefile << src_right[2].y << endl;
+				writefile << src_right[3].x << endl;
+				writefile << src_right[3].y << endl;
+				writefile.close();
 			}
 
 			warpPerspective(cont_right,frame_trans_right,trans_right,cont_right.size());

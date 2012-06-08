@@ -63,7 +63,7 @@ int flag_left = 0;
 int flag_right = 0;
 
 double cal_dist_left, cal_dist_right; // Pixel distance coresponding to cal_dist ft
-double cal_dist = 2.0;
+double cal_dist = 1.6667;
 
 double real_dist_left, real_dist_right;
 
@@ -103,9 +103,9 @@ try {
 	double distance_right = 0.0;
 	double distance_left = 0.0;
 
-	bool obstacle-left = false;
-	bool obstacle-right = false;
-	bool obstacle-center = false;
+	bool obstacle_left = false;
+	bool obstacle_right = false;
+	bool obstacle_center = false;
 	
 	if (argc != 2)
 	{
@@ -682,7 +682,7 @@ int ImageProcess()
 	int dist_left = 0;
 	int dist_right = 0;
 
-	readfile2.open("cal_data.txt")
+	readfile2.open("cal_data.txt");
 
 	readfile2 >> setprecision(15) >> src_left[0].x;
 	readfile2 >> setprecision(15) >> src_left[0].y;
