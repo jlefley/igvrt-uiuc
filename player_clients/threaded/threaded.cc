@@ -103,6 +103,7 @@ try {
 	double distance_center = 0.0; //distance from robot to object
 	double distance_right = 0.0;
 	double distance_left = 0.0;
+	double thresh_react = 0.0;
 
 	bool obstacle_left = false;
 	bool obstacle_right = false;
@@ -387,7 +388,7 @@ try {
 							derivative_error = error - prev_error;
 							//cout << "Differentiated error: " << derivative_error << endl;
 							rv = A*error + B*derivative_error + C*constrain(integrated_error, -GUARD_GAIN, GUARD_GAIN);
-							line_error = real_dist_right - real_dist_left;
+							line_error = 8 * (real_dist_right - real_dist_left) + 0.1 * (line_error - prev_line_error);
 							
 							if(distance_center <= 15.0 || distance_right < 18.0 || distance_left < 18.0)
 							{
@@ -407,41 +408,53 @@ try {
 										if(obstacle_left)
 										{
 											//OBSTACLES LEFT, RIGHT, CENTER
+											cout << "LRC" << endl;
 											if(real_dist_right > 6.8 && real_dist_left > 6.8)
 											{
 												pp.SetSpeed(15,50);
 											}
 											else
 											{
-												if(line_error > 0.0)
+												if(line_error > thresh_react)
 												{			
 													//CLOSER TO THE LEFT
 													pp.SetSpeed(15, 50);
 												}
-												else
+												if(line_error < -thresh_react)
 												{
 													//CLOSER TO THE RIGHT
-													pp.SetSpeed(15, -50);
+													//pp.SetSpeed(15, -50);
+													pp.SetSpeed(15,50);
+												}
+												if(line_error <= thresh_react && line_error >= -thresh_react)
+												{
+													pp.SetSpeed(15, 50);
 												}
 											}
 										}
 										else
 										{
 											//OBSTACLES RIGHT, CENTER
+											cout << "RC" << endl;
 											if(real_dist_right > 6.8 && real_dist_left > 6.8)
 											{
 												pp.SetSpeed(15, -50);
 											}
 											else
 											{
-												if(line_error > 0.0)
+												if(line_error > thresh_react)
 												{			
 													//CLOSER TO THE LEFT
-													pp.SetSpeed(15,-30);
+													//pp.SetSpeed(15,-30);
+													pp.SetSpeed(15, -50);
 												}
-												else
+												if(line_error < -thresh_react)
 												{
 													//CLOSER TO THE RIGHT
+													pp.SetSpeed(15,-50);
+												}
+												if(line_error >= -thresh_react && line_error<=thresh_react)
+												{
 													pp.SetSpeed(15,-50);
 												}
 											}
@@ -452,42 +465,54 @@ try {
 										if(obstacle_left)
 										{
 											//OBSTACLES LEFT, CENTER
+											cout << "LC" << endl;
 											if(real_dist_right > 6.8 && real_dist_left > 6.8)
 											{
 												pp.SetSpeed(15,50);
 											}
 											else
 											{
-												if(line_error > 0.0)
+												if(line_error > thresh_react)
 												{			
 													//CLOSER TO THE LEFT
 													pp.SetSpeed(15,50);
 												}
-												else
+												if(line_error < -thresh_react)
 												{
 													//CLOSER TO THE RIGHT
-													pp.SetSpeed(15,30);
+													//pp.SetSpeed(15,30);
+													pp.SetSpeed(15,50);
+												}
+												if(line_error >= -thresh_react && line_error <= thresh_react)
+												{
+													pp.SetSpeed(15,50);
 												}
 											}
 										}
 										else
 										{
 											//OBSTACLES CENTER
+											cout << "C" << endl;
 											if(real_dist_right > 6.8 && real_dist_left > 6.8)
 											{
 												pp.SetSpeed(15,50);	
 											}
 											else
 											{
-												if(line_error > 0.0)
+												if(line_error > thresh_react)
 												{			
 													//CLOSER TO THE LEFT
 													pp.SetSpeed(15, 50);
 												}
-												else
+												if(line_error < -thresh_react)
 												{
 													//CLOSER TO THE RIGHT
 													pp.SetSpeed(15, -50);
+													pp.SetSpeed(15,50);
+												}
+												if(line_error <= thresh_react && line_error >= thresh_react)
+												{
+													pp.SetSpeed(15, 50);
 												}
 											}
 										}
@@ -500,20 +525,25 @@ try {
 										if(obstacle_left)
 										{
 											//OBSTACLES LEFT, RIGHT
+											cout << "LR" << endl;
 											if(real_dist_right > 6.8 && real_dist_left > 6.8)
 											{
 												pp.SetSpeed(20,10);
 											}
 											else
 											{
-												if(line_error > 0.0)
-												{			
+												if(line_error > thresh_react)
+												{
 													//CLOSER TO THE LEFT
 													pp.SetSpeed(20, 10);
 												}
-												else
+												if(line_error < -thresh_react)
 												{
 													//CLOSER TO THE RIGHT
+													pp.SetSpeed(20, 10);
+												}
+												if(line_error <= thresh_react && line_error >= -thresh_react)
+												{
 													pp.SetSpeed(20, 10);
 												}
 											}
@@ -521,20 +551,29 @@ try {
 										else
 										{
 											//OBSTACLES RIGHT
+											cout << "R" << endl;
 											if(real_dist_right > 6.8 && real_dist_left > 6.8)
 											{
 												pp.SetSpeed(15,-50);
 											}
 											else
 											{
-												if(line_error > 0.0)
+												if(line_error > thresh_react)
 												{			
+													cout << "a" << endl;
 													//CLOSER TO THE LEFT
-													pp.SetSpeed(15,80);
+													//pp.SetSpeed(15,50);
+													pp.SetSpeed(15,-50);
 												}
-												else
+												if(line_error < -thresh_react)
 												{
+													cout << "b" << endl;
 													//CLOSER TO THE RIGHT
+													pp.SetSpeed(15,-50);
+												}
+												if(line_error <= thresh_react && line_error > -thresh_react)
+												{
+													cout << "c" << endl;
 													pp.SetSpeed(15,-50);
 												}
 											}
@@ -545,30 +584,36 @@ try {
 										if(obstacle_left)
 										{
 											//OBSTACLES LEFT
+											cout << "L" << endl;
 											if(real_dist_right > 6.8 && real_dist_left > 6.8)
 											{
 												pp.SetSpeed(15,50);
 											}
 											else
 											{	
-												if(line_error > 0.0)
+												if(line_error > thresh_react)
 												{			
 													//CLOSER TO THE LEFT
 													pp.SetSpeed(15, 50);
 												}
-												else
+												if(line_error < -thresh_react)
 												{
 													//CLOSER TO THE RIGHT
-													pp.SetSpeed(15, -80);
+													//pp.SetSpeed(15, -50);
+													pp.SetSpeed(15,50);
+												}
+												if(line_error < thresh_react && line_error > -thresh_react)
+												{
+													pp.SetSpeed(15, 50);
 												}
 											}
 										}
 										else
 										{
 											//NO OBSTACLES, DO NOTHING UNLESS YOU SEE LINES
+											cout << "NO OBSTACLES" << endl;
 											if(real_dist_right > 6.8 && real_dist_left > 6.8)
-											{						
-												//DO NOTHING, SEE ABOVE
+											{				
 												if(rv > 30 && getDistance(meas_longitude, meas_latitude, way_long, way_lat) < 3.0)
 												{
 													pp.SetSpeed(15, rv);
@@ -587,9 +632,9 @@ try {
 											}
 											else
 											{
-												//AVOID LINES
-												pp.SetSpeed(tv, 10*line_error);
-
+											//AVOID LINES
+											cout << "LINES" << endl;
+											pp.SetSpeed(tv, line_error);
 											}
 										}
 									}
@@ -621,6 +666,8 @@ try {
 								pp.SetSpeed(0,0);
 								break;
 							}
+							prev_error = error;
+							prev_line_error = line_error;
 							//cout << "Longitude Error: " << abs(meas_longitude - way_long) << endl;
 							//cout << "Latitude Error: " << abs(meas_latitude - way_lat) << endl;
 						}
