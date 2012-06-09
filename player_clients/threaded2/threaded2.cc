@@ -92,6 +92,7 @@ int main(int argc, char *argv[])
 
 boost::thread t(&ImageProcess);
 boost::thread t2(&UpdateVars);
+sleep(5);
 
 try {
 	char opt, way_opt;
