@@ -350,7 +350,7 @@ try {
 							meas_longitude = gp.GetLongitude();
 							meas_latitude = gp.GetLatitude();
 
-							if(distance_center < 60)
+							if(distance_center < 36)
 							{
 								obstacle_center = true;
 							}
@@ -359,7 +359,7 @@ try {
 								obstacle_center = false;
 							}
 
-							if(distance_left < 60)
+							if(distance_left < 36)
 							{
 								obstacle_left = true;
 							}
@@ -369,7 +369,7 @@ try {
 							}
 
 
-							if(distance_right < 60)
+							if(distance_right < 36)
 							{
 								obstacle_right = true;
 							}
@@ -423,7 +423,6 @@ try {
 												if(line_error < -thresh_react)
 												{
 													//CLOSER TO THE RIGHT
-													//pp.SetSpeed(15, -50);
 													pp.SetSpeed(15,50);
 												}
 												if(line_error <= thresh_react && line_error >= -thresh_react)
@@ -445,7 +444,6 @@ try {
 												if(line_error > thresh_react)
 												{			
 													//CLOSER TO THE LEFT
-													//pp.SetSpeed(15,-30);
 													pp.SetSpeed(15, -50);
 												}
 												if(line_error < -thresh_react)
@@ -480,7 +478,6 @@ try {
 												if(line_error < -thresh_react)
 												{
 													//CLOSER TO THE RIGHT
-													//pp.SetSpeed(15,30);
 													pp.SetSpeed(15,50);
 												}
 												if(line_error >= -thresh_react && line_error <= thresh_react)
@@ -562,7 +559,6 @@ try {
 												{			
 													cout << "a" << endl;
 													//CLOSER TO THE LEFT
-													//pp.SetSpeed(15,50);
 													pp.SetSpeed(15,-50);
 												}
 												if(line_error < -thresh_react)
@@ -599,7 +595,6 @@ try {
 												if(line_error < -thresh_react)
 												{
 													//CLOSER TO THE RIGHT
-													//pp.SetSpeed(15, -50);
 													pp.SetSpeed(15,50);
 												}
 												if(line_error < thresh_react && line_error > -thresh_react)
