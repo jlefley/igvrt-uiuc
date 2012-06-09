@@ -381,7 +381,8 @@ try {
 												if(line_error < -thresh_react)
 												{
 													//CLOSER TO THE RIGHT
-													pp.SetSpeed(15, -50);
+													//pp.SetSpeed(15, -50);
+													pp.SetSpeed(15,50);
 												}
 												if(line_error <= thresh_react && line_error >= -thresh_react)
 												{
@@ -402,7 +403,8 @@ try {
 												if(line_error > thresh_react)
 												{			
 													//CLOSER TO THE LEFT
-													pp.SetSpeed(15,-30);
+													//pp.SetSpeed(15,-30);
+													pp.SetSpeed(15, -50);
 												}
 												if(line_error < -thresh_react)
 												{
@@ -436,7 +438,8 @@ try {
 												if(line_error < -thresh_react)
 												{
 													//CLOSER TO THE RIGHT
-													pp.SetSpeed(15,30);
+													//pp.SetSpeed(15,30);
+													pp.SetSpeed(15,50);
 												}
 												if(line_error >= -thresh_react && line_error <= thresh_react)
 												{
@@ -463,6 +466,7 @@ try {
 												{
 													//CLOSER TO THE RIGHT
 													pp.SetSpeed(15, -50);
+													pp.SetSpeed(15,50);
 												}
 												if(line_error <= thresh_react && line_error >= thresh_react)
 												{
@@ -516,7 +520,8 @@ try {
 												{			
 													cout << "a" << endl;
 													//CLOSER TO THE LEFT
-													pp.SetSpeed(15,50);
+													//pp.SetSpeed(15,50);
+													pp.SetSpeed(15,-50);
 												}
 												if(line_error < -thresh_react)
 												{
@@ -552,7 +557,8 @@ try {
 												if(line_error < -thresh_react)
 												{
 													//CLOSER TO THE RIGHT
-													pp.SetSpeed(15, -50);
+													//pp.SetSpeed(15, -50);
+													pp.SetSpeed(15,50);
 												}
 												if(line_error < thresh_react && line_error > -thresh_react)
 												{
