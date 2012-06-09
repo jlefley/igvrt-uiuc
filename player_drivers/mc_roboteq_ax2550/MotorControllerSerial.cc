@@ -142,11 +142,11 @@ bool MotorControllerSerial::sendSingleMotorCmd(double val, int motorInd)
 
 	//expects motor values to be in range [-100,100]
 
-	if(val > 100)
-		val = 100;
+	if(val > 80)
+		val = 80;
 
-	if(val < -100)
-		val = -100;
+	if(val < -80)
+		val = -80;
 
 	val_scaled = rint((fabs(val) / 100.0)*127.0);
 

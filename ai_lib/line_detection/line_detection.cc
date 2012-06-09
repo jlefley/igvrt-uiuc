@@ -305,7 +305,7 @@ int main(int argc, char *argv[])
 				trans_left = getPerspectiveTransform(src_left,dst_left);
 				flag_left = 1;
 
-				writefile.open("cal_data.txt", ofstream::app);
+				writefile.open("cal_data.txt", ofstream::trunc);
 				writefile << src_left[0].x << endl;
 				writefile << src_left[0].y << endl;
 				writefile << src_left[1].x << endl;

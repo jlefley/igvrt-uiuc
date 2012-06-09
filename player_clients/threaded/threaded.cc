@@ -91,6 +91,7 @@ try {
 	double error = 0;
 	double prev_error = 0;
 	double line_error = 0;
+	double prev_line_error = 0;
 	double integrated_error = 0;
 	double derivative_error = 0;
 	double way_long, way_lat;
@@ -396,21 +397,6 @@ try {
 							{
 								///WAYPOINT NAVIGATION: LOWEST IMPORTANCE IN HEIRARCHICAL CONTROL STRUCTURE 
 								///(SEE CASE "NO OBSTACLES, DO NOTHING UNLESS YOU SEE LINES" BELOW)
-								if(rv > 30 && getDistance(meas_longitude, meas_latitude, way_long, way_lat) < 2.0)
-								{
-									pp.SetSpeed(5, rv);
-								}
-								else
-								{
-									if(rv < -30 && getDistance(meas_longitude, meas_latitude, way_long, way_lat) < 2.0)
-									{
-										pp.SetSpeed(5, rv);
-									}
-									else
-									{
-										pp.SetSpeed(tv, rv);
-									}
-								}
 								//OBSTACLE AVOIDANCE AND LANE FOLLOWING: EQUAL (GREATER THAN WAYPOINTS) IMPORTANCE
 								//IN CONTROL STRUCTURE
 
@@ -421,29 +407,43 @@ try {
 										if(obstacle_left)
 										{
 											//OBSTACLES LEFT, RIGHT, CENTER
-											if(line_error > 0.0)
-											{			
-												//CLOSER TO THE LEFT
-												pp.SetSpeed(5, 50);
+											if(real_dist_right > 6.8 && real_dist_left > 6.8)
+											{
+												pp.SetSpeed(15,50);
 											}
 											else
 											{
-												//CLOSER TO THE RIGHT
-												pp.SetSpeed(5, -50);
+												if(line_error > 0.0)
+												{			
+													//CLOSER TO THE LEFT
+													pp.SetSpeed(15, 50);
+												}
+												else
+												{
+													//CLOSER TO THE RIGHT
+													pp.SetSpeed(15, -50);
+												}
 											}
 										}
 										else
 										{
 											//OBSTACLES RIGHT, CENTER
-											if(line_error > 0.0)
-											{			
-												//CLOSER TO THE LEFT
-												pp.SetSpeed(5,-30);
+											if(real_dist_right > 6.8 && real_dist_left > 6.8)
+											{
+												pp.SetSpeed(15, -50);
 											}
 											else
 											{
-												//CLOSER TO THE RIGHT
-												pp.SetSpeed(5,-50);
+												if(line_error > 0.0)
+												{			
+													//CLOSER TO THE LEFT
+													pp.SetSpeed(15,-30);
+												}
+												else
+												{
+													//CLOSER TO THE RIGHT
+													pp.SetSpeed(15,-50);
+												}
 											}
 										}
 									}
@@ -452,29 +452,43 @@ try {
 										if(obstacle_left)
 										{
 											//OBSTACLES LEFT, CENTER
-											if(line_error > 0.0)
-											{			
-												//CLOSER TO THE LEFT
-												pp.SetSpeed(5,50);
+											if(real_dist_right > 6.8 && real_dist_left > 6.8)
+											{
+												pp.SetSpeed(15,50);
 											}
 											else
 											{
-												//CLOSER TO THE RIGHT
-												pp.SetSpeed(5,30);
+												if(line_error > 0.0)
+												{			
+													//CLOSER TO THE LEFT
+													pp.SetSpeed(15,50);
+												}
+												else
+												{
+													//CLOSER TO THE RIGHT
+													pp.SetSpeed(15,30);
+												}
 											}
 										}
 										else
 										{
 											//OBSTACLES CENTER
-											if(line_error > 0.0)
-											{			
-												//CLOSER TO THE LEFT
-												pp.SetSpeed(5, 50);
+											if(real_dist_right > 6.8 && real_dist_left > 6.8)
+											{
+												pp.SetSpeed(15,50);	
 											}
 											else
 											{
-												//CLOSER TO THE RIGHT
-												pp.SetSpeed(5, -50);
+												if(line_error > 0.0)
+												{			
+													//CLOSER TO THE LEFT
+													pp.SetSpeed(15, 50);
+												}
+												else
+												{
+													//CLOSER TO THE RIGHT
+													pp.SetSpeed(15, -50);
+												}
 											}
 										}
 									}
@@ -486,29 +500,43 @@ try {
 										if(obstacle_left)
 										{
 											//OBSTACLES LEFT, RIGHT
-											if(line_error > 0.0)
-											{			
-												//CLOSER TO THE LEFT
-												pp.SetSpeed(20, 10);
+											if(real_dist_right > 6.8 && real_dist_left > 6.8)
+											{
+												pp.SetSpeed(20,10);
 											}
 											else
 											{
-												//CLOSER TO THE RIGHT
-												pp.SetSpeed(20, 10);
+												if(line_error > 0.0)
+												{			
+													//CLOSER TO THE LEFT
+													pp.SetSpeed(20, 10);
+												}
+												else
+												{
+													//CLOSER TO THE RIGHT
+													pp.SetSpeed(20, 10);
+												}
 											}
 										}
 										else
 										{
 											//OBSTACLES RIGHT
-											if(line_error > 0.0)
-											{			
-												//CLOSER TO THE LEFT
-												pp.SetSpeed(5,80);
+											if(real_dist_right > 6.8 && real_dist_left > 6.8)
+											{
+												pp.SetSpeed(15,-50);
 											}
 											else
 											{
-												//CLOSER TO THE RIGHT
-												pp.SetSpeed(5,-50);
+												if(line_error > 0.0)
+												{			
+													//CLOSER TO THE LEFT
+													pp.SetSpeed(15,80);
+												}
+												else
+												{
+													//CLOSER TO THE RIGHT
+													pp.SetSpeed(15,-50);
+												}
 											}
 										}
 									}
@@ -517,32 +545,39 @@ try {
 										if(obstacle_left)
 										{
 											//OBSTACLES LEFT
-											if(line_error > 0.0)
-											{			
-												//CLOSER TO THE LEFT
-												pp.SetSpeed(5, 50);
+											if(real_dist_right > 6.8 && real_dist_left > 6.8)
+											{
+												pp.SetSpeed(15,50);
 											}
 											else
-											{
-												//CLOSER TO THE RIGHT
-												pp.SetSpeed(5, -80);
+											{	
+												if(line_error > 0.0)
+												{			
+													//CLOSER TO THE LEFT
+													pp.SetSpeed(15, 50);
+												}
+												else
+												{
+													//CLOSER TO THE RIGHT
+													pp.SetSpeed(15, -80);
+												}
 											}
 										}
 										else
 										{
 											//NO OBSTACLES, DO NOTHING UNLESS YOU SEE LINES
-											if(real_dist_right > 7.0 && real_dist_left > 7.0)
+											if(real_dist_right > 6.8 && real_dist_left > 6.8)
 											{						
 												//DO NOTHING, SEE ABOVE
-												if(rv > 30 && getDistance(meas_longitude, meas_latitude, way_long, way_lat) < 2.0)
+												if(rv > 30 && getDistance(meas_longitude, meas_latitude, way_long, way_lat) < 3.0)
 												{
-													pp.SetSpeed(5, rv);
+													pp.SetSpeed(15, rv);
 												}
 												else
 												{
-													if(rv < -30 && getDistance(meas_longitude, meas_latitude, way_long, way_lat) < 2.0)
+													if(rv < -30 && getDistance(meas_longitude, meas_latitude, way_long, way_lat) < 3.0)
 													{
-														pp.SetSpeed(5, rv);
+														pp.SetSpeed(15, rv);
 													}
 													else
 													{
@@ -628,14 +663,14 @@ try {
 				while(1)
 				{
 					robot.Read();
-					line_error = real_dist_right - real_dist_left;
-					if(real_dist_right > 7.0 && real_dist_left > 7.0)
+					line_error = 8 * (real_dist_right - real_dist_left) + 0.1 * (line_error - prev_line_error);
+					if(real_dist_right > 6.8 && real_dist_left > 6.8)
 					{						
 						pp.SetSpeed(tv,0);
 					}
 					else
 					{
-						pp.SetSpeed(tv, 10*line_error);
+						pp.SetSpeed(tv, line_error);
 
 					}
 					cout << line_error << endl;
@@ -648,6 +683,7 @@ try {
 							dp.SetOutput(1,0);
 							break;
 						}
+					prev_line_error = line_error;
 				}
 				break;
 			case 'q':
