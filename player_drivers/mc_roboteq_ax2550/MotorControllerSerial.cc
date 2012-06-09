@@ -363,15 +363,15 @@ double MotorControllerSerial::internalVoltage()
 	return _internalVoltage;
 }
 
-bool MotorControllerSerial::estopState()
+int MotorControllerSerial::estopState()
 {
 	if (_inputs[2] == 1)
 	{
-		return false;
+		return 0;
 	}
 	else
 	{
-		return true;
+		return 1;
 	}
 
 }

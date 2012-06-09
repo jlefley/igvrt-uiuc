@@ -51,7 +51,7 @@ public:
 	double right();
 	double mainVoltage();
 	double internalVoltage();
-	bool estopState();
+	int estopState();
 
 protected:
 
