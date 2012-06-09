@@ -66,6 +66,7 @@ double cal_dist_left, cal_dist_right; // Pixel distance coresponding to cal_dist
 double cal_dist = 1.6667;
 
 //SENSOR DATA
+int UpdateVars();
 double real_dist_left, real_dist_right;
 double distance_center = 0.0; //distance from robot to object
 double distance_right = 0.0;
@@ -74,7 +75,12 @@ bool obstacle_left = false;
 bool obstacle_right = false;
 bool obstacle_center = false;
 double line_error = 0;
+double prev_line_error = 0;
 int estop = 0;
+double meas = 0.0;
+double meas_latitude = 0.0;
+double meas_longitude = 0.0;
+double charge = 0.0;
 	
 
 double df(int x1, int y1, int x2, int y2);
@@ -85,7 +91,7 @@ int main(int argc, char *argv[])
 {
 
 boost::thread t(&ImageProcess);
-boost::thread t(&UpdateVars);
+boost::thread t2(&UpdateVars);
 
 try {
 	char opt, way_opt;
@@ -98,7 +104,7 @@ try {
 	ifstream readfile;
 	string line;
 
-	double tv, rv, set, meas, latitude, longitude, meas_latitude, meas_longitude, target_heading;
+	double tv, rv, set, latitude, longitude, target_heading;
 	double error = 0;
 	double prev_error = 0;
 	double integrated_error = 0;
@@ -109,6 +115,7 @@ try {
 	double B = 0.02; // d
 	double C = 0.000012; // i
 	const double GUARD_GAIN = 1e5; //i control constraint
+	double thresh_react = 10.0;
 
 	if (argc != 2)
 	{
@@ -119,17 +126,17 @@ try {
 
 	PlayerClient robot("localhost");
 	Position2dProxy pp(&robot,0);
-	PowerProxy wp(&robot,0);
-	ImuProxy ii(&robot,0);
-	SonarProxy test(&robot,0);
+	//PowerProxy wp(&robot,0);
+	//ImuProxy ii(&robot,0);
+	//SonarProxy test(&robot,0);
 	//Status light proxy	
 	DioProxy dp(&robot,0);
 	//Estop proxy	
-	DioProxy ep(&robot,1);	
-	GpsProxy gp(&robot,0);
+	//DioProxy ep(&robot,1);	
+	//GpsProxy gp(&robot,0);
 
-	robot.SetDataMode(PLAYER_DATAMODE_PULL);
-	robot.SetReplaceRule(true, -1, -1, -1);
+	//robot.SetDataMode(PLAYER_DATAMODE_PULL);
+	//robot.SetReplaceRule(true, -1, -1, -1);
 
 
 	cout.precision(15);
@@ -209,7 +216,7 @@ try {
 						pp.SetSpeed(tv,rv);	
 					}
 	
-					if(ep.GetInput(0) == 1)
+					if(estop == 1)
 					{
 						cout << "E-Stop Condition" << endl;
 						pp.SetSpeed(0,0);
@@ -235,16 +242,18 @@ try {
 				}
 				break;
 			case 'p':
-				robot.Read();
-				cout << "Center distance: " << test[0] << endl;
-				cout << "Left distance: " << test[1] << endl;
-				cout << "Right distance: " << test[2] << endl;
-				cout << "Heading: " << ii.GetPose().pyaw << endl;
-				cout << "Lat, Lng: " << gp.GetLatitude() << "," << gp.GetLongitude() << endl;
-				cout << "Battery Voltage: " << wp.GetCharge() << endl;
-				cout << "Estop Status: " << ep.GetInput(0) << endl;
+				cout << "Center distance: " << distance_center << endl;
+				cout << "Left distance: " << distance_left << endl;
+				cout << "Right distance: " << distance_right << endl;
+				cout << "Heading: " << meas<< endl;
+				cout << "Lat, Lng: " << meas_latitude << "," << meas_longitude << endl;
+				cout << "Battery Voltage: " << charge << endl;
+				cout << "Estop Status: " << estop << endl;
 				cout << "Left clearance: " << real_dist_left << endl;
 				cout << "Right clearance: " << real_dist_right << endl;
+				cout << "Obstacle Left: " << obstacle_left << endl;
+				cout << "Obstacle Right: " << obstacle_right << endl;
+				cout << "Obstacle Center: " << obstacle_center << endl;
 				break;
 			case 'w':
 				readfile.open(argv[1]);
@@ -326,10 +335,10 @@ try {
 						cout << "Approaching Waypoint " << way_counter << endl;
 						while((abs(meas_longitude - way_long) > tol) || (abs(meas_latitude - way_lat) > tol))
 						{
-							cout << real_dist_left << " " << real_dist_right << endl;
+							//cout << real_dist_left << " " << real_dist_right << endl;
 							target_heading = getHeading(meas_longitude, meas_latitude, way_long, way_lat);
 							error = headingError(target_heading,meas);
-							cout << getDistance(meas_longitude, meas_latitude, way_long, way_lat) << endl;
+							//cout << getDistance(meas_longitude, meas_latitude, way_long, way_lat) << endl;
 							//cout << "Error: " << error << endl;
 							integrated_error += error;
 							//cout << "Integrated error: " << integrated_error << endl;
@@ -356,41 +365,51 @@ try {
 										if(obstacle_left)
 										{
 											//OBSTACLES LEFT, RIGHT, CENTER
+											cout << "LRC" << endl;
 											if(real_dist_right > 6.8 && real_dist_left > 6.8)
 											{
 												pp.SetSpeed(15,50);
 											}
 											else
 											{
-												if(line_error > 0.0)
+												if(line_error > thresh_react)
 												{			
 													//CLOSER TO THE LEFT
 													pp.SetSpeed(15, 50);
 												}
-												else
+												if(line_error < -thresh_react)
 												{
 													//CLOSER TO THE RIGHT
 													pp.SetSpeed(15, -50);
+												}
+												if(line_error <= thresh_react && line_error >= -thresh_react)
+												{
+													pp.SetSpeed(15, 50);
 												}
 											}
 										}
 										else
 										{
 											//OBSTACLES RIGHT, CENTER
+											cout << "RC" << endl;
 											if(real_dist_right > 6.8 && real_dist_left > 6.8)
 											{
 												pp.SetSpeed(15, -50);
 											}
 											else
 											{
-												if(line_error > 0.0)
+												if(line_error > thresh_react)
 												{			
 													//CLOSER TO THE LEFT
 													pp.SetSpeed(15,-30);
 												}
-												else
+												if(line_error < -thresh_react)
 												{
 													//CLOSER TO THE RIGHT
+													pp.SetSpeed(15,-50);
+												}
+												if(line_error >= -thresh_react && line_error<=thresh_react)
+												{
 													pp.SetSpeed(15,-50);
 												}
 											}
@@ -401,42 +420,52 @@ try {
 										if(obstacle_left)
 										{
 											//OBSTACLES LEFT, CENTER
+											cout << "LC" << endl;
 											if(real_dist_right > 6.8 && real_dist_left > 6.8)
 											{
 												pp.SetSpeed(15,50);
 											}
 											else
 											{
-												if(line_error > 0.0)
+												if(line_error > thresh_react)
 												{			
 													//CLOSER TO THE LEFT
 													pp.SetSpeed(15,50);
 												}
-												else
+												if(line_error < -thresh_react)
 												{
 													//CLOSER TO THE RIGHT
 													pp.SetSpeed(15,30);
+												}
+												if(line_error >= -thresh_react && line_error <= thresh_react)
+												{
+													pp.SetSpeed(15,50);
 												}
 											}
 										}
 										else
 										{
 											//OBSTACLES CENTER
+											cout << "C" << endl;
 											if(real_dist_right > 6.8 && real_dist_left > 6.8)
 											{
 												pp.SetSpeed(15,50);	
 											}
 											else
 											{
-												if(line_error > 0.0)
+												if(line_error > thresh_react)
 												{			
 													//CLOSER TO THE LEFT
 													pp.SetSpeed(15, 50);
 												}
-												else
+												if(line_error < -thresh_react)
 												{
 													//CLOSER TO THE RIGHT
 													pp.SetSpeed(15, -50);
+												}
+												if(line_error <= thresh_react && line_error >= thresh_react)
+												{
+													pp.SetSpeed(15, 50);
 												}
 											}
 										}
@@ -449,20 +478,25 @@ try {
 										if(obstacle_left)
 										{
 											//OBSTACLES LEFT, RIGHT
+											cout << "LR" << endl;
 											if(real_dist_right > 6.8 && real_dist_left > 6.8)
 											{
 												pp.SetSpeed(20,10);
 											}
 											else
 											{
-												if(line_error > 0.0)
+												if(line_error > thresh_react)
 												{
 													//CLOSER TO THE LEFT
 													pp.SetSpeed(20, 10);
 												}
-												else
+												if(line_error < -thresh_react)
 												{
 													//CLOSER TO THE RIGHT
+													pp.SetSpeed(20, 10);
+												}
+												if(line_error <= thresh_react && line_error >= -thresh_react)
+												{
 													pp.SetSpeed(20, 10);
 												}
 											}
@@ -470,20 +504,28 @@ try {
 										else
 										{
 											//OBSTACLES RIGHT
+											cout << "R" << endl;
 											if(real_dist_right > 6.8 && real_dist_left > 6.8)
 											{
 												pp.SetSpeed(15,-50);
 											}
 											else
 											{
-												if(line_error > 0.0)
+												if(line_error > thresh_react)
 												{			
+													cout << "a" << endl;
 													//CLOSER TO THE LEFT
-													pp.SetSpeed(15,80);
+													pp.SetSpeed(15,50);
 												}
-												else
+												if(line_error < -thresh_react)
 												{
+													cout << "b" << endl;
 													//CLOSER TO THE RIGHT
+													pp.SetSpeed(15,-50);
+												}
+												if(line_error <= thresh_react && line_error > -thresh_react)
+												{
+													cout << "c" << endl;
 													pp.SetSpeed(15,-50);
 												}
 											}
@@ -494,30 +536,35 @@ try {
 										if(obstacle_left)
 										{
 											//OBSTACLES LEFT
+											cout << "L" << endl;
 											if(real_dist_right > 6.8 && real_dist_left > 6.8)
 											{
 												pp.SetSpeed(15,50);
 											}
 											else
 											{	
-												if(line_error > 0.0)
+												if(line_error > thresh_react)
 												{			
 													//CLOSER TO THE LEFT
 													pp.SetSpeed(15, 50);
 												}
-												else
+												if(line_error < -thresh_react)
 												{
 													//CLOSER TO THE RIGHT
-													pp.SetSpeed(15, -80);
+													pp.SetSpeed(15, -50);
+												}
+												if(line_error < thresh_react && line_error > -thresh_react)
+												{
+													pp.SetSpeed(15, 50);
 												}
 											}
 										}
 										else
 										{
 											//NO OBSTACLES, DO NOTHING UNLESS YOU SEE LINES
+											cout << "NO OBSTACLES" << endl;
 											if(real_dist_right > 6.8 && real_dist_left > 6.8)
-											{						
-												//DO NOTHING, SEE ABOVE
+											{				
 												if(rv > 30 && getDistance(meas_longitude, meas_latitude, way_long, way_lat) < 3.0)
 												{
 													pp.SetSpeed(15, rv);
@@ -536,9 +583,9 @@ try {
 											}
 											else
 											{
-												//AVOID LINES
-												pp.SetSpeed(tv, 10*line_error);
-
+											//AVOID LINES
+											cout << "LINES" << endl;
+											pp.SetSpeed(tv, line_error);
 											}
 										}
 									}
@@ -564,16 +611,18 @@ try {
 								*/
 							}
 
-							if(ep.GetInput(0) == 1)
+							if(estop == 1)
 							{
 								cout << "E-Stop Condition" << endl;
 								pp.SetSpeed(0,0);
 								break;
 							}
+							prev_error = error;
+							prev_line_error = line_error;
 							//cout << "Longitude Error: " << abs(meas_longitude - way_long) << endl;
 							//cout << "Latitude Error: " << abs(meas_latitude - way_lat) << endl;
 						}
-						if(ep.GetInput(0) == 1)
+						if(estop == 1)
 						{
 							cout << "E-Stop Condition" << endl;
 							pp.SetSpeed(0,0);
@@ -599,9 +648,9 @@ try {
 			case 'n':
 				while(1)
 				{
-					cout << "Center: " << test[0] << endl;
-					cout << "Left: " << test[1] << endl;
-					cout << "Right: " << test[2] << endl;
+					cout << "Center: " << distance_center<< endl;
+					cout << "Left: " << distance_left << endl;
+					cout << "Right: " << distance_right << endl;
 				}
 				break;
 			case 'l':
@@ -623,7 +672,7 @@ try {
 					cout << line_error << endl;
 					
 
-					if(ep.GetInput(0) == 1)
+					if(estop == 1)
 						{
 							cout << "E-Stop Condition" << endl;
 							pp.SetSpeed(0,0);
@@ -648,57 +697,78 @@ try {
 	}
 }
 
-void UpdateVars()
+int UpdateVars()
 {
-	PlayerClient robot("localhost");
-	Position2dProxy pp(&robot,0);
-	PowerProxy wp(&robot,0);
-	ImuProxy ii(&robot,0);
-	SonarProxy test(&robot,0);
-	//Status light proxy	
-	DioProxy dp(&robot,0);
-	//Estop proxy	
-	DioProxy ep(&robot,1);	
-	GpsProxy gp(&robot,0);
-
-	robot.SetDataMode(PLAYER_DATAMODE_PULL);
-	robot.SetReplaceRule(true, -1, -1, -1);
-
-	robot.Read();
-	distance_center=test[0];
-	distance_left=test[1];
-	distance_right=test[2];
-	meas = ii.GetPose().pyaw;
-	meas_longitude = gp.GetLongitude();
-	meas_latitude = gp.GetLatitude();
-
-	if(distance_center < 60)
+	try
 	{
-		obstacle_center = true;
+		PlayerClient robot1("localhost");
+		//Position2dProxy pp(&robot1,0);
+		PowerProxy wp(&robot1,0);
+		ImuProxy ii(&robot1,0);
+		SonarProxy test(&robot1,0);
+		//Status light proxy	
+		//DioProxy dp(&robot1,0);
+		//Estop proxy	
+		DioProxy ep(&robot1,1);	
+		GpsProxy gp(&robot1,0);
+
+		robot1.SetDataMode(PLAYER_DATAMODE_PULL);
+		robot1.SetReplaceRule(true, -1, -1, -1);
+
+		while(1)
+		{
+			robot1.Read();
+			distance_center=test[0];
+			distance_left=test[1];
+			distance_right=test[2];
+			meas = ii.GetPose().pyaw;
+			meas_longitude = gp.GetLongitude();
+			meas_latitude = gp.GetLatitude();
+			charge = wp.GetCharge();
+
+			if(ep.GetInput(0) == 1)
+			{
+			estop = 1;
+			}
+			else
+			{
+			estop = 0;
+			}
+
+			if(distance_center < 36)
+			{
+				obstacle_center = true;
+			}
+			else
+			{
+				obstacle_center = false;
+			}
+
+			if(distance_left < 36)
+			{
+				obstacle_left = true;
+			}
+			else
+			{
+				obstacle_left = false;
+			}
+
+
+			if(distance_right < 36)
+			{
+				obstacle_right = true;
+			}
+			else
+			{
+				obstacle_right = false;
+			}
+		}
 	}
-	else
+	catch (PlayerError e)
 	{
-		obstacle_center = false;
+		cerr << e << endl;
+		return -1;
 	}
-
-	if(distance_left < 60)
-	{
-		obstacle_left = true;
-	}
-	else
-	{
-		obstacle_left = false;
-	}
-
-
-	if(distance_right < 60)
-	{
-		obstacle_right = true;
-	}
-	else
-	{
-		obstacle_right = false;
-	}	
 }
 
 int ImageProcess()
