@@ -9,7 +9,7 @@ Highlights:
   - Arduino interfacing for sensors
   - Roboteq AX2550 serial interfacing
   
-Previously hosted at [Google code](http://code.google.com/p/igvrt-uiuc/)  Prior to Google code, the project was hosted elsewhere; the commit history from there has been lost.  Much of the original code was authored by Josh Sulkin.
+Rehosted from [Google code](http://code.google.com/p/igvrt-uiuc/)  Prior to Google code, the project was hosted elsewhere; the commit history from there has been lost.  Much of the original code was authored by Josh Sulkin.
 
 [Design report](http://www.igvc.org/design/2012/University%20of%20Illinois,%20UrbanaChampaign.pdf)
 
